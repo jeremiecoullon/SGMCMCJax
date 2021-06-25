@@ -40,29 +40,14 @@ samples = my_sampler(key, Nsamples, jnp.zeros(D))
 
 ## Samplers
 
-### SGLD
+The library includes several SGMCMC algorithms which whos pros and cons are briefly discussed in the [documentation](https://sgmcmcjax.readthedocs.io/en/latest/all_samplers.html).
 
-[Stochastic gradient Langevin dynamics](https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf) (SGLD) is the most basic SGMCMC algorithm.
+The current list of samplers is:
 
-**Pros:** simple to code up and understand and fast.
-
-**Cons:** The variance estimated from samples quickly becomes too large as the batch size decreases  
-
-### SGLD-CV
-
-[SGLD with control variates](https://arxiv.org/abs/1706.05439): the same update as SGLD but with a better estimate for the gradient
-
-**Pros:** The gradient estimate is much more accurate for log-concave posteriors for only a small added computational cost
-
-**Cons:** The gradient estimate will lose accuracy for posteriors that are not log-concave.  You also need to obtain the centering value (by optimising the posterior) before running the sampler
-
-### SVRG-langevin
-
-
-### SGHMC
-
-
-### SGHMC-CV
-
-
-### SGHMC-SVRG
+- SGLD
+- SGLD-CV
+- SVRG-Langevin
+- SGHMC
+- SGHMC-CV
+- SVRG-SGHMC
+- pSGLD
