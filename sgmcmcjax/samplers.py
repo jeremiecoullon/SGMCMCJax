@@ -43,7 +43,9 @@ def _build_noncompiled_sampler(init_fn, my_kernel, get_params):
     return sampler
 
 def sgmcmc_sampler(build_sampler_fn):
-
+    """
+    Decorator that turns a kernel factory into a sampler factory
+    """
     @functools.wraps(build_sampler_fn)
     def wrapper(*args, **kwargs):
         compiled = kwargs.pop('compiled', True)
@@ -55,31 +57,10 @@ def sgmcmc_sampler(build_sampler_fn):
 
     return wrapper
 
-
-@sgmcmc_sampler
-def build_sgld_sampler(dt, loglikelihood, logprior, data, batch_size):
-    return build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size)
-
-@sgmcmc_sampler
-def build_sgldCV_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value):
-    return build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value)
-
-@sgmcmc_sampler
-def build_sgld_SVRG_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
-    return build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate)
-
-@sgmcmc_sampler
-def build_psgld_sampler(dt, loglikelihood, logprior, data, batch_size):
-    return build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size)
-
-@sgmcmc_sampler
-def build_sghmc_sampler(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01):
-    return build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha)
-
-@sgmcmc_sampler
-def build_sghmcCV_sampler(dt, L, loglikelihood, logprior, data, batch_size, centering_value, alpha=0.01):
-    return build_sghmcCV_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, alpha)
-
-@sgmcmc_sampler
-def build_sghmc_SVRG_sampler(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha=0.01):
-    return build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha)
+build_sgld_sampler = sgmcmc_sampler(build_sgld_kernel)
+build_sgldCV_sampler = sgmcmc_sampler(build_sgldCV_kernel)
+build_sgld_SVRG_sampler = sgmcmc_sampler(build_sgld_SVRG_kernel)
+build_psgld_sampler = sgmcmc_sampler(build_psgld_kernel)
+build_sghmc_sampler = sgmcmc_sampler(build_sghmc_kernel)
+build_sghmcCV_sampler = sgmcmc_sampler(build_sghmcCV_kernel)
+build_sghmc_SVRG_sampler = sgmcmc_sampler(build_sghmc_SVRG_kernel)
