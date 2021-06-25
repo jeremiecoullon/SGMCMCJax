@@ -10,9 +10,12 @@ SGMCMCJax is a lightweight library of stochastic gradient Markov chain Monte Car
 
 The target audience for this library is researchers and practitioners: simply plug in your JAX model and easily obtain samples.
 
+You can find the source code `on Github`_.
 
-SGLD "hello world" example
---------------------------
+.. _on Github: https://github.com/jeremiecoullon/SGMCMCJax
+
+"Hello World" example
+---------------------
 
 Estimate the mean of a Gaussian using SGLD::
 
