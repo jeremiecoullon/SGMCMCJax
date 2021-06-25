@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 from jax import lax, jit, partial, random
 from tqdm.auto import tqdm
+import functools
 
 from .kernels import build_sgld_kernel, build_psgld_kernel, build_sgldCV_kernel, build_sgld_SVRG_kernel
 from .kernels import build_sghmc_kernel, build_sghmcCV_kernel, build_sghmc_SVRG_kernel#, build_sgnht_kernel
@@ -41,61 +42,44 @@ def _build_noncompiled_sampler(init_fn, my_kernel, get_params):
         return samples
     return sampler
 
+def sgmcmc_sampler(build_sampler_fn):
 
-def build_sgld_sampler(dt, loglikelihood, logprior, data, batch_size, compiled=True):
-    init_fn, my_kernel, get_params = build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+    @functools.wraps(build_sampler_fn)
+    def wrapper(*args, **kwargs):
+        compiled = kwargs.pop('compiled', True)
+        init_fn, my_kernel, get_params = build_sampler_fn(*args, **kwargs)
+        if compiled:
+            return _build_compiled_sampler(init_fn, my_kernel, get_params)
+        else:
+            return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
 
-def build_sgldCV_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value, compiled=True):
-    init_fn, my_kernel, get_params = build_sgldCV_kernel(dt, loglikelihood, logprior,
-                                        data, batch_size, centering_value)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+    return wrapper
 
-def build_sgld_SVRG_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate, compiled=True):
-    init_fn, my_kernel, get_params = build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data,
-                                        batch_size, centering_value, update_rate)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
 
-def build_psgld_sampler(dt, loglikelihood, logprior, data, batch_size, compiled=True):
-    init_fn, my_kernel, get_params = build_psgld_kernel(dt, loglikelihood, logprior,
-                                        data, batch_size)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+@sgmcmc_sampler
+def build_sgld_sampler(dt, loglikelihood, logprior, data, batch_size):
+    return build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size)
 
-def build_sghmc_sampler(dt, L, loglikelihood, logprior, data, batch_size,
-                        alpha=0.01, compiled=True):
-    init_fn, my_kernel, get_params = build_sghmc_kernel(dt, L, loglikelihood, logprior,
-                                        data, batch_size, alpha)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+@sgmcmc_sampler
+def build_sgldCV_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value):
+    return build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value)
 
-def build_sghmcCV_sampler(dt, L, loglikelihood, logprior, data, batch_size,
-                        centering_value, alpha=0.01, compiled=True):
-    init_fn, my_kernel, get_params = build_sghmcCV_kernel(dt, L, loglikelihood, logprior,
-                                        data, batch_size, centering_value, alpha)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+@sgmcmc_sampler
+def build_sgld_SVRG_sampler(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
+    return build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate)
 
-def build_sghmc_SVRG_sampler(dt, L, loglikelihood, logprior, data, batch_size,
-                        centering_value, update_rate, alpha=0.01, compiled=True):
-    init_fn, my_kernel, get_params = build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior,
-                                data, batch_size, centering_value, update_rate, alpha)
-    if compiled:
-        return _build_compiled_sampler(init_fn, my_kernel, get_params)
-    else:
-        return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+@sgmcmc_sampler
+def build_psgld_sampler(dt, loglikelihood, logprior, data, batch_size):
+    return build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size)
+
+@sgmcmc_sampler
+def build_sghmc_sampler(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01):
+    return build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha)
+
+@sgmcmc_sampler
+def build_sghmcCV_sampler(dt, L, loglikelihood, logprior, data, batch_size, centering_value, alpha=0.01):
+    return build_sghmcCV_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, alpha)
+
+@sgmcmc_sampler
+def build_sghmc_SVRG_sampler(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha=0.01):
+    return build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha)
