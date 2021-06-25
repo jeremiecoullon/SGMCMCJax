@@ -12,9 +12,12 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
 
     @jit
     def estimate_gradient(key, param):
-        idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
-        minibatch_data = tuple([elem[idx_batch] for elem in data])
-        return grad_log_post(param, *minibatch_data)
+        if (batch_size is None) or batch_size == N_data:
+            return grad_log_post(param, *data)
+        else:
+            idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
+            minibatch_data = tuple([elem[idx_batch] for elem in data])
+            return grad_log_post(param, *minibatch_data)
     return estimate_gradient
 
 # Control variates
