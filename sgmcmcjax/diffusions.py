@@ -7,15 +7,15 @@ from jax._src.util import safe_map, unzip2
 
 map = safe_map
 
-SGMCMCState = namedtuple("SGMCMCState", ['packed_state', 'tree_def', 'subtree_defs'])
+DiffusionState = namedtuple("DiffusionState", ['packed_state', 'tree_def', 'subtree_defs'])
 
 register_pytree_node(
-    SGMCMCState,
+    DiffusionState,
     lambda xs: ((xs.packed_state,), (xs.tree_def, xs.subtree_defs)),
-    lambda data, xs : SGMCMCState(xs[0], data[0], data[1]))
+    lambda data, xs : DiffusionState(xs[0], data[0], data[1]))
 
 
-def sgmcmc(sampler_maker):
+def diffusion(sampler_maker):
 
     @functools.wraps(sampler_maker)
     def tree_sampler_maker(*args, **kwargs):
@@ -31,7 +31,7 @@ def sgmcmc(sampler_maker):
             x0_flat, tree = tree_flatten(x0_tree)
             initial_states = [init_fn(x0) for x0 in x0_flat]
             states_flat, subtrees = unzip2(map(tree_flatten, initial_states))
-            return SGMCMCState(states_flat, tree, subtrees)
+            return DiffusionState(states_flat, tree, subtrees)
 
         @functools.wraps(update)
         def tree_update(i, key, grad_tree, sampler_state):
@@ -51,7 +51,7 @@ def sgmcmc(sampler_maker):
                     msg = ("sampler update function produced an output structure that "
                      "did not match its input structure: input {} and output {}.")
                     raise TypeError(msg.format(subtree, subtree2))
-            return SGMCMCState(new_states_flat, tree, subtrees)
+            return DiffusionState(new_states_flat, tree, subtrees)
 
         @functools.wraps(get_params)
         def tree_get_params(sampler_state):
@@ -68,7 +68,7 @@ def sgmcmc(sampler_maker):
                 keys = random.split(k, len(x_flat))
                 states = [resample_momentum(key, x) for (key, x) in zip(keys, x_flat)]
                 states_flat, subtree = unzip2(map(tree_flatten, states))
-                return SGMCMCState(states_flat, tree, subtree)
+                return DiffusionState(states_flat, tree, subtree)
 
             return tree_init, tree_update, tree_get_params, tree_resample_momentum
         else:
@@ -76,7 +76,7 @@ def sgmcmc(sampler_maker):
     return tree_sampler_maker
 
 
-@sgmcmc
+@diffusion
 def sgld(dt):
 
     def init_fn(x):
@@ -90,7 +90,7 @@ def sgld(dt):
 
     return init_fn, update, get_params
 
-@sgmcmc
+@diffusion
 def psgld(dt, alpha=0.99, eps=1e-5):
     "https://arxiv.org/pdf/1512.07666.pdf"
 
@@ -110,7 +110,7 @@ def psgld(dt, alpha=0.99, eps=1e-5):
 
     return init_fn, update, get_params
 
-@sgmcmc
+@diffusion
 def sgldAdam(dt, beta1=0.9, beta2=0.999, eps=1e-8):
     "https://arxiv.org/abs/2105.13059"
 
@@ -135,7 +135,7 @@ def sgldAdam(dt, beta1=0.9, beta2=0.999, eps=1e-8):
 
     return init_fn, update, get_params
 
-@sgmcmc
+@diffusion
 def sghmc(dt, alpha=0.01):
     "https://arxiv.org/abs/1402.4102"
 
