@@ -4,9 +4,7 @@ from .util import one_hot
 """
 # Bayesian NN
 
-Load data:
-1. MNIST
-2. not-MNIST
+Load MNIST data from tensorflow_datasets
 """
 
 # 1. MNIST

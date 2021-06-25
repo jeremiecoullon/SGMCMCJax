@@ -35,14 +35,3 @@ def flatten_NN_params_jaxscan(params):
     Flatten NN params that came out of `jax.lax.scan`
     """
     return jnp.concatenate([_flatten_jax(layer) for layer in params], axis=1)
-
-
-
-# def load_NN_params():
-#     params = np.load(f"{BASE_DIR}/data/NN_params.npy", allow_pickle=True)
-#     return [tuple([jnp.array(e2) for e2 in e1]) for e1 in params]
-
-#
-# def load_NN_MAP():
-#     params = np.load(f"{BASE_DIR}/data/NN_MAP.npy", allow_pickle=True)
-#     return [tuple([jnp.array(e2) for e2 in e1]) for e1 in params]

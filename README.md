@@ -4,7 +4,7 @@
 
 SGMCMCJax is a lightweight library of stochastic gradient Markov chain Monte Carlo (SGMCMC) algorithms. The aim is to include both standard samplers (SGLD, SGHMC) as well as state of the art samplers (SVRG-langevin, others, ...).
 
-The target audience for this library is researchers and practitioners: simply plug in your JAX model and easily obtain samples without having to rewrite the samplers.
+The target audience for this library is researchers and practitioners: simply plug in your JAX model and easily obtain samples.
 
 ## Example usage
 

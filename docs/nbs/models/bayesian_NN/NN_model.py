@@ -29,13 +29,6 @@ def init_network(key, sizes):
     keys = random.split(key, len(sizes))
     return [random_layer(k,m,n) for k,m,n in zip(keys, sizes[:-1], sizes[1:])]
 
-def zero_layer(m, n):
-    return (jnp.zeros((n,m))), jnp.zeros((n,))
-
-def init_zero_network():
-    sizes = [784, 100, 10]
-    return [zero_layer(m,n) for m,n in zip(sizes[:-1], sizes[1:])]
-
 # ===========
 # predict and accuracy functions
 @jit
