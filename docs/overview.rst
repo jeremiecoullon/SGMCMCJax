@@ -3,6 +3,12 @@ Overview
 
 There are 3 ways to use `SGMCMCJax` which correspond to 3 levels of abstraction:
 
+1. Build a function that returns samples
+2. Build a transition kernel that updates the state of the chain
+3. Build a function that solves the diffusion for 1 time step
+
+We now give an overview of each of these options.
+
 
 Option 1: Build a sampler function:
 -----------------------------------
@@ -38,8 +44,9 @@ By doing this we obtain 3 functions:
 We can now write the loop ourselves and update the state using the kernel function. Note that we must also split the random key, and save the samples ourselves::
 
   state = init_fn(jnp.zeros(10))
+  samples = []
 
-  for i in tqdm(range(Nsamples)):
+  for i in range(Nsamples):
     key, subkey = random.split(key)
     state = my_kernel(i, subkey, state)
     samples.append(get_params(state))
@@ -65,8 +72,9 @@ Similarly to building the kernel, we obtain 3 functions. `init_fn` and `get_para
 We can then run the sampler::
 
   state = init_fn(jnp.zeros(10))
+  samples = []
 
-  for i in tqdm(range(Nsamples)):
+  for i in range(Nsamples):
     key, subkey = random.split(key)
     mygrad = grad_log_post(get_params(state), *data) # use all the data
     state = update(i, subkey, mygrad, state)

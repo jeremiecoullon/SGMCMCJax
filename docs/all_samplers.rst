@@ -5,7 +5,9 @@ SGMCMC samplers
 Samplers:
 ---------
 
-There are several SGMCMC samplers available. Each comes with its own set of tradeoffs. Here we list them and very briefly describe the pros and cons of each.
+There are several SGMCMC samplers available. Each comes with its own set of tradeoffs. Here we list them and very briefly describe the pros and cons of each. You can see them in action in `this notebook`_.
+
+.. _this notebook: nbs/sampler.ipynb
 
 SGLD:
 ^^^^^
@@ -79,7 +81,7 @@ pSGLD:
 
 `Preconditioned SGLD`_: SGLD with an adaptive (diagonal) preconditioner; this is essentially RMSProp merged with SGLD. Note that we set :math:`\Gamma(\theta)=0` as recommended in the paper.
 
-.. _Preconditioned SGLD: SVRG-Langevin
+.. _Preconditioned SGLD: https://arxiv.org/abs/1512.07666
 
 **Pros:** The preconditioner can help with poorly scaled posteriors
 

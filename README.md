@@ -6,6 +6,8 @@ SGMCMCJax is a lightweight library of stochastic gradient Markov chain Monte Car
 
 The target audience for this library is researchers and practitioners: simply plug in your JAX model and easily obtain samples.
 
+Note that this library is still in its early stages so expect the API to change a bit.
+
 ## Example usage
 
 We show the basic usage with the following example of estimating the mean of a D-dimensional Gaussian from data using a Gaussian prior.
