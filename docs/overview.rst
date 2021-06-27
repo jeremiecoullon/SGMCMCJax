@@ -37,10 +37,11 @@ By doing this we obtain 3 functions:
 
 We can now write the loop ourselves and update the state using the kernel function. Note that we must also split the random key, and save the samples ourselves::
 
+  state = init_fn(jnp.zeros(10))
+
   for i in tqdm(range(Nsamples)):
     key, subkey = random.split(key)
-    mygrad = grad_log_post(get_params(state), *data) # use all the data.
-    state = update(0, subkey, mygrad, state)
+    state = my_kernel(i, subkey, state)
     samples.append(get_params(state))
 
 Writing the loop manually is useful if we want to do things like calculate the accuracy on a test dataset throughout the sampling.
@@ -63,10 +64,12 @@ Similarly to building the kernel, we obtain 3 functions. `init_fn` and `get_para
 
 We can then run the sampler::
 
+  state = init_fn(jnp.zeros(10))
+
   for i in tqdm(range(Nsamples)):
     key, subkey = random.split(key)
     mygrad = grad_log_post(get_params(state), *data) # use all the data
-    state = update(0, subkey, mygrad, state)
+    state = update(i, subkey, mygrad, state)
     samples.append(get_params(state))
 
 Note that we also need to build the gradient of the log-posterior (`SGMCMCJax` comes with a utility function to do this), as well as calculate the gradient at each iteration ourselves. This is useful if the data doesn't fit in memory so must be regularly read from a file. It is also useful if we want to implement our own gradient estimator.

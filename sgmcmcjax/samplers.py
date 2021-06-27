@@ -36,7 +36,7 @@ def _build_noncompiled_sampler(init_fn, my_kernel, get_params):
 
         for k in tqdm(range(Nsamples)):
             key, subkey = random.split(key)
-            state = my_kernel(0, subkey, state)
+            state = my_kernel(i, subkey, state)
             samples.append(get_params(state))
 
         return samples
