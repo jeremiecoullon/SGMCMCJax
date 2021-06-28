@@ -3,7 +3,7 @@ import functools
 import jax.numpy as jnp
 from jax import jit, lax, random
 
-from .diffusions import sgld, psgld, sghmc
+from .diffusions import sgld, psgld, sghmc, baoab
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG
 from .util import build_grad_log_post
 
@@ -73,6 +73,20 @@ def _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum, estimate_
         return state
 
     return sghmc_kernel
+
+def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
+    "build generic palindrome kernel"
+
+    @jit
+    def kernel(i, key, state):
+        state_params, param_grad = state
+        k1, k2 = random.split(key)
+        state_params = update1(i, k2, param_grad, state_params)
+        param_grad = estimate_gradient(k1, get_params(state_params))
+        state_params = update2(i, k2, param_grad, state_params) # the random key k2 isn't used in update2
+        return (state_params, param_grad)
+
+    return kernel
 
 # =======
 # kernels
@@ -148,3 +162,20 @@ def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, ce
         return get_params(state_params)
 
     return new_init_fn, sghmc_kernel, new_get_params
+
+
+def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, kBT=0.25):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    init_fn, update1, update2, get_params = baoab(dt, gamma)
+    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    baoab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
+
+    def new_init_fn(params):
+        param_grads = grad_log_post(params, *data)
+        return (init_fn(params), param_grads)
+
+    def new_get_params(state):
+        state_params, _ = state
+        return get_params(state_params)
+
+    return new_init_fn, baoab_kernel, new_get_params

@@ -53,3 +53,4 @@ The current list of samplers is:
 - SGHMC-CV
 - SVRG-SGHMC
 - pSGLD
+- BAOAB
