@@ -5,6 +5,7 @@ import functools
 
 from .kernels import build_sgld_kernel, build_psgld_kernel, build_sgldCV_kernel, build_sgld_SVRG_kernel
 from .kernels import build_sghmc_kernel, build_sghmcCV_kernel, build_sghmc_SVRG_kernel, build_baoab_kernel
+from .kernels import build_sgnht_kernel
 from .util import progress_bar_scan
 
 """
@@ -65,3 +66,4 @@ build_sghmc_sampler = sgmcmc_sampler(build_sghmc_kernel)
 build_sghmcCV_sampler = sgmcmc_sampler(build_sghmcCV_kernel)
 build_sghmc_SVRG_sampler = sgmcmc_sampler(build_sghmc_SVRG_kernel)
 build_baoab_sampler = sgmcmc_sampler(build_baoab_kernel)
+build_sgnht_sampler = sgmcmc_sampler(build_sgnht_kernel)

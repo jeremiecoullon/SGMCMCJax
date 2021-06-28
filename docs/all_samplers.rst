@@ -86,3 +86,18 @@ pSGLD:
 **Pros:** The preconditioner can help with poorly scaled posteriors
 
 **Cons:** the fact that there is no clear cutoff to the adaptation means that sometimes the samples are not of great quality.
+
+BAOAB:
+^^^^^^
+
+`Underdamped Langevin scheme`_: The BAOAB scheme is a numerical method to solve underdamped Langevin dynamics
+
+.. _Underdamped Langevin scheme: https://aip.scitation.org/doi/abs/10.1063/1.4802990
+
+
+SGNHT:
+^^^^^^
+
+`Stochastic Gradient Nose-Hoover thermostats`_: Extends SGHMC with a third variable.
+
+.. _Stochastic Gradient Nose-Hoover thermostats: http://people.ee.duke.edu/~lcarin/sgnht-4.pdf

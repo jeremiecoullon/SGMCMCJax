@@ -193,7 +193,6 @@ def sghmc(dt, alpha=0.01):
 
     return init_fn, update, get_params, resample_momentum
 
-
 @diffusion_palindrome
 def baoab(dt, gamma, kBT=0.25):
 
@@ -225,3 +224,37 @@ def baoab(dt, gamma, kBT=0.25):
         return x
 
     return init_fn, update1, update2, get_params
+
+@diffusion
+def sgnht(dt, a=0.01):
+    "http://people.ee.duke.edu/~lcarin/sgnht-4.pdf"
+
+    def init_fn(x):
+        v = jnp.zeros_like(x)
+        xi = a
+        return x, v, xi
+
+    def initial_momentum(kv):
+        "sample momentum at the first iteration"
+        k, v = kv
+        key, subkey = random.split(k)
+        v = random.normal(subkey, shape=v.shape)
+        return key, v
+
+    def update(i, k, g, state):
+        x, v, xi = state
+        k,v = lax.cond(i==0,
+                initial_momentum,
+                lambda kv: (k,v),
+                (k,v)
+            )
+        v = v + dt*g - xi*v*dt + jnp.sqrt(2*a*dt)*random.normal(k, shape=jnp.shape(x))
+        x = x + v*dt
+        xi = xi + ((jnp.linalg.norm(v)**2)/v.size -1.)*dt
+        return x, v, xi
+
+    def get_params(state):
+        x, _, _ = state
+        return x
+
+    return init_fn, update, get_params

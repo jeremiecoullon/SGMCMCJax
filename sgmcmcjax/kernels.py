@@ -3,7 +3,7 @@ import functools
 import jax.numpy as jnp
 from jax import jit, lax, random
 
-from .diffusions import sgld, psgld, sghmc, baoab
+from .diffusions import sgld, psgld, sghmc, baoab, sgnht
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG
 from .util import build_grad_log_post
 
@@ -179,3 +179,11 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, kBT
         return get_params(state_params)
 
     return new_init_fn, baoab_kernel, new_get_params
+
+# def build_sgld_kernel(dt, grad_log_post, data, batch_size):
+def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    init_fn, update, get_params = sgnht(dt, a)
+    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    sgnht_kernel = _build_langevin_kernel(update, get_params, estimate_gradient)
+    return init_fn, sgnht_kernel, get_params
