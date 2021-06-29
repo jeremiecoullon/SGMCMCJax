@@ -31,7 +31,7 @@ SGLD:
 SGHMC:
 ^^^^^^
 
-`Stochastic gradient HMC`_: overlamped Langevin with momentum resampling and stochastic gradients. The solver uses an Euler discretisation (as in the reference):
+`Stochastic gradient HMC`_: Euler discretisation of overamped Langevin with momentum resampling and stochastic gradients.
 
 .. math::
   \begin{cases}
@@ -56,17 +56,18 @@ SGNHT:
 
 .. math::
   \begin{cases}
-  v_{n+1} &= v_n + dt\hat{\nabla} \log \pi(x_n) - \alpha v_n + \sqrt{2a dt}\xi \\
+  v_{n+1} &= v_n + dt\hat{\nabla} \log \pi(x_n) - \alpha_n v_n + \sqrt{2a dt}\xi \\
   x_{n+1} &= x_{n+1} + v_n \\
-  \alpha_{n+1} &= \alpha_n + \frac{1}{p}v_{n+1}^Tv_{n+1} - dt
+  \alpha_{n+1} &= \alpha_n + \frac{1}{D}v_{n+1}^Tv_{n+1} - dt
   \end{cases}
 
 .. _Stochastic Gradient Nose-Hoover thermostats: http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
 
+Here :math:`D` is the dimension of the parameter. The tunable parameters are :math:`dt` and :math:`a` (default :math:`a=0.01`).
 
 **Pros:** The friction term adapts to the amount of noise in the gradient estimate.
 
-**Cons:** The performance of the sampler is quite sensitive to step size. The Euler solver is not as accurate as a splitting scheme such as BADODAB. The sampler also has an adaptation time as the friction term needs to match the noise of the gradients
+**Cons:** The performance of the sampler is quite sensitive to step size as the Euler solver is not as accurate and stable as a splitting scheme such as `BADODAB`_. Finally, the sampler takes time to adapt the friction term to match the noise of the gradients.
 
 
 pSGLD:
@@ -86,12 +87,12 @@ pSGLD:
 
 **Pros:** The preconditioner can help with poorly scaled posteriors. This algorithm was designed for training deep neural networks.
 
-**Cons:** the fact that there is no clear cutoff to the adaptation means that sometimes the samples are not of great quality.
+**Cons:** Unlike RMSProp the step size does not tune automatically; a good value of :math:`dt` is necessary for good performance.
 
 BAOAB:
 ^^^^^^
 
-`BAOAB`_ scheme for underdamped Langevin dynamics: This splitting scheme is a numerical method to solve underdamped Langevin dynamics. This was originally derived for exact gradients.
+`BAOAB`_: This splitting scheme is a numerical method to solve underdamped Langevin dynamics. This was originally derived for exact gradients.
 
 .. _BAOAB: https://aip.scitation.org/doi/abs/10.1063/1.4802990
 
@@ -110,7 +111,7 @@ The tuning parameters are the step size :math:`dt`, the friction coefficient :ma
 BADODAB:
 ^^^^^^^^
 
-`BADODAB`_ scheme for SGNHT: This splitting scheme is a numerical method to solve the NHT equations:
+`BADODAB`_ scheme for SGNHT: This splitting scheme is a numerical method to solve the SGNHT equations:
 
 .. _BADODAB: https://arxiv.org/pdf/1505.06889.pdf
 
@@ -128,9 +129,11 @@ BADODAB:
 
 The tuning parameters are :math:`dt` and :math:`a` (default: :math:`a=0.01`). The two other parameters are fixed: :math:`\mu=1` and :math:`\sigma=1`.
 
-**Pros:** The friction term adapts to the amount of noise in the gradient estimate, and the splitting scheme is more accurate than the Euler method, thus allowing a larger range of step sizes and minitbatch sizes.
+**Pros:** The friction term adapts to the amount of noise in the gradient estimate, and the splitting scheme is more accurate and stable than the Euler method in `SGNHT`_. This allows a larger range of step sizes and smaller minibatches.
 
-**Cons:** The sampler has an adaptation time as the friction term needs to match the noise of the gradients
+**Cons:** The sampler takes time to adapt the friction term to match the noise of the gradients.
+
+.. _SGNHT: http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
 
 Gradient estimators:
 --------------------
