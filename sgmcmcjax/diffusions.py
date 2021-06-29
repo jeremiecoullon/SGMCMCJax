@@ -170,7 +170,7 @@ def sgldAdam(dt, beta1=0.9, beta2=0.999, eps=1e-8):
     return init_fn, update, get_params
 
 @diffusion_sghmc
-def sghmc(dt, alpha=0.01):
+def sghmc(dt, alpha=0.01, beta=0):
     "https://arxiv.org/abs/1402.4102"
 
     def init_fn(x):
@@ -180,7 +180,7 @@ def sghmc(dt, alpha=0.01):
     def update(i, k, g, state):
         x, v = state
         x = x + v
-        v = v + dt*g - alpha*v + jnp.sqrt(2*alpha*dt)*random.normal(k, shape=jnp.shape(x))
+        v = v + dt*g - alpha*v + jnp.sqrt(2*(alpha - beta)*dt)*random.normal(k, shape=jnp.shape(x))
         return x, v
 
     def get_params(state):
@@ -194,7 +194,7 @@ def sghmc(dt, alpha=0.01):
     return init_fn, update, get_params, resample_momentum
 
 @diffusion_palindrome
-def baoab(dt, gamma, kBT=0.25):
+def baoab(dt, gamma, tau=1):
 
     def init_fn(x):
         v = jnp.zeros_like(x)
@@ -208,7 +208,7 @@ def baoab(dt, gamma, kBT=0.25):
 
         c1 = jnp.exp(-gamma*dt)
         c2 = jnp.sqrt(1 - c1**2)
-        v = c1*v + kBT*c2*random.normal(k, shape=jnp.shape(v))
+        v = c1*v + tau*c2*random.normal(k, shape=jnp.shape(v))
 
         x = x + v*dt*0.5
 
@@ -227,31 +227,31 @@ def baoab(dt, gamma, kBT=0.25):
 
 @diffusion
 def sgnht(dt, a=0.01):
-    "http://people.ee.duke.edu/~lcarin/sgnht-4.pdf"
+    "http://people.ee.duke.edu/~lcarin/sgnht-4.pdf: Algorithm 2"
 
     def init_fn(x):
         v = jnp.zeros_like(x)
-        xi = a
-        return x, v, xi
+        alpha = a
+        return x, v, alpha
 
     def initial_momentum(kv):
         "sample momentum at the first iteration"
         k, v = kv
         key, subkey = random.split(k)
-        v = random.normal(subkey, shape=v.shape)
+        v = jnp.sqrt(dt)*random.normal(subkey, shape=v.shape)
         return key, v
 
     def update(i, k, g, state):
-        x, v, xi = state
+        x, v, alpha = state
         k,v = lax.cond(i==0,
                 initial_momentum,
                 lambda kv: (k,v),
                 (k,v)
             )
-        v = v + dt*g - xi*v*dt + jnp.sqrt(2*a*dt)*random.normal(k, shape=jnp.shape(x))
-        x = x + v*dt
-        xi = xi + ((jnp.linalg.norm(v)**2)/v.size -1.)*dt
-        return x, v, xi
+        v = v - alpha*v + dt*g + jnp.sqrt(2*a*dt)*random.normal(k, shape=jnp.shape(x))
+        x = x + v
+        alpha = alpha + (jnp.linalg.norm(v)**2)/v.size - dt
+        return x, v, alpha
 
     def get_params(state):
         x, _, _ = state

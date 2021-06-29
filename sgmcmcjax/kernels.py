@@ -164,7 +164,7 @@ def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, ce
     return new_init_fn, sghmc_kernel, new_get_params
 
 
-def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, kBT=0.25):
+def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update1, update2, get_params = baoab(dt, gamma)
     estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
