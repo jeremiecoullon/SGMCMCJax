@@ -10,12 +10,12 @@ There are several SGMCMC samplers available. Each comes with its own set of trad
 Diffusions:
 -----------
 
-Each of these diffusions must include an estimate for the gradient denoted :math:`\hat{\nabla} \log \pi(x_n)`. These can be either the standard estimator, the control variates estimator, or the SVRG estimator.
+Each of these diffusions must include an estimate for the gradient denoted :math:`\hat{\nabla} \log \pi(x_n)`. These can be either the standard estimator, the control variates estimator, or the SVRG estimator. Throughout we define :math:`\xi \sim \mathcal{N}(0,1)`.
 
 SGLD:
 ^^^^^
 
-`Stochastic gradient Langevin dynamics`_ (SGLD) is the most basic SGMCMC algorithm: it's solves the underdamped Langevin diffusion using an Euler solver. The update is given by (with :math:`\xi \sim \mathcal{N}(0,1)`):
+`Stochastic gradient Langevin dynamics`_ (SGLD) is the most basic SGMCMC algorithm: it's solves the overdamped Langevin diffusion using an Euler solver. The update is given by:
 
 .. _Stochastic gradient Langevin dynamics: https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
 
@@ -110,7 +110,7 @@ The tuning parameters are the step size :math:`dt`, the friction coefficient :ma
 BADODAB:
 ^^^^^^^^
 
-`BADODAB`_ scheme for SGNHT: This splitting scheme is a numerical method to solve NHT.
+`BADODAB`_ scheme for SGNHT: This splitting scheme is a numerical method to solve the NHT equations:
 
 .. _BADODAB: https://arxiv.org/pdf/1505.06889.pdf
 
