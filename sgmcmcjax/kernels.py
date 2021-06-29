@@ -3,7 +3,7 @@ import functools
 import jax.numpy as jnp
 from jax import jit, lax, random
 
-from .diffusions import sgld, psgld, sghmc, baoab, sgnht
+from .diffusions import sgld, psgld, sghmc, baoab, sgnht, badodab
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG
 from .util import build_grad_log_post
 
@@ -187,3 +187,20 @@ def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     sgnht_kernel = _build_langevin_kernel(update, get_params, estimate_gradient)
     return init_fn, sgnht_kernel, get_params
+
+
+def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    init_fn, update1, update2, get_params = badodab(dt, a)
+    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    badodab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
+
+    def new_init_fn(params):
+        param_grads = grad_log_post(params, *data)
+        return (init_fn(params), param_grads)
+
+    def new_get_params(state):
+        state_params, _ = state
+        return get_params(state_params)
+
+    return new_init_fn, badodab_kernel, new_get_params

@@ -258,3 +258,42 @@ def sgnht(dt, a=0.01):
         return x
 
     return init_fn, update, get_params
+
+@diffusion_palindrome
+def badodab(dt, a=0.01):
+    "https://arxiv.org/abs/1505.06889"
+
+    def init_fn(x):
+        v = jnp.zeros_like(x)
+        alpha = a
+        return x, v, alpha
+
+    def update(i, k, g, state):
+        x, v, alpha = state
+
+        dt2 = dt/2
+        mu = 1.
+        sigma = 1.
+
+        v = v + dt2*g
+        x = x + dt2*v
+        alpha = alpha + (dt2/mu)*(jnp.linalg.norm(v) - v.size)
+
+        c1 = jnp.exp(-alpha*dt)
+        c2 = jnp.where(alpha==0, jnp.sqrt(dt), jnp.sqrt(jnp.abs((1-c1**2)/(2*alpha))))
+        v = c1*v + c2*sigma*random.normal(k, shape=jnp.shape(v))
+
+        alpha = alpha + (dt2/mu)*(jnp.linalg.norm(v) - v.size)
+        x = x + dt2*v
+        return x, v, alpha
+
+    def update2(i, k, g, state):
+        x, v, alpha = state
+        v = v + dt*0.5*g
+        return x, v, alpha
+
+    def get_params(state):
+        x, _, _ = state
+        return x
+
+    return init_fn, update, update2, get_params

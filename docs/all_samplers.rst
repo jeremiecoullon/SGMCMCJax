@@ -2,7 +2,7 @@ SGMCMC samplers
 ===============
 
 
-There are several SGMCMC samplers available. Each comes with its own set of tradeoffs. These are build from a diffusion along with an estimator for the gradient. Here we list and very briefly describe the pros and cons of each diffusion and gradient estimator. You can see them in action in `this notebook`_.
+There are several SGMCMC samplers available. Each comes with its own set of tradeoffs. These are built from a diffusion along with an estimator for the gradient. Here we list and very briefly describe the pros and cons of each diffusion and gradient estimator. You can see them in action in `this notebook`_.
 
 
 .. _this notebook: nbs/sampler.ipynb
@@ -15,7 +15,7 @@ Each of these diffusions must include an estimate for the gradient denoted :math
 SGLD:
 ^^^^^
 
-`Stochastic gradient Langevin dynamics`_ (SGLD) is the most basic SGMCMC algorithm. The update is given by (with :math:`\xi \sim \mathcal{N}(0,1)`):
+`Stochastic gradient Langevin dynamics`_ (SGLD) is the most basic SGMCMC algorithm: it's solves the underdamped Langevin diffusion using an Euler solver. The update is given by (with :math:`\xi \sim \mathcal{N}(0,1)`):
 
 .. _Stochastic gradient Langevin dynamics: https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
 
@@ -47,6 +47,26 @@ The tuning parameters in the update equation are :math:`dt`, :math:`\alpha`, and
 
 .. _Stochastic gradient HMC: https://arxiv.org/abs/1402.4102
 
+
+
+SGNHT:
+^^^^^^
+
+`Stochastic Gradient Nose-Hoover thermostats`_: Extends SGHMC with a third variable and uses an Euler solver.
+
+.. math::
+  \begin{cases}
+  v_{n+1} &= v_n + dt\hat{\nabla} \log \pi(x_n) - \alpha v_n + \sqrt{2a dt}\xi \\
+  x_{n+1} &= x_{n+1} + v_n \\
+  \alpha_{n+1} &= \alpha_n + \frac{1}{p}v_{n+1}^Tv_{n+1} - dt
+  \end{cases}
+
+.. _Stochastic Gradient Nose-Hoover thermostats: http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
+
+
+**Pros:** The friction term adapts to the amount of noise in the gradient estimate.
+
+**Cons:** The performance of the sampler is quite sensitive to step size. The Euler solver is not as accurate as a splitting scheme such as BADODAB. The sampler also has an adaptation time as the friction term needs to match the noise of the gradients
 
 
 pSGLD:
@@ -86,25 +106,31 @@ BAOAB:
 
 The tuning parameters are the step size :math:`dt`, the friction coefficient :math:`\gamma`, and the temperature :math:`\tau`. By default we set :math:`\tau=1`.
 
-SGNHT:
-^^^^^^
 
-`Stochastic Gradient Nose-Hoover thermostats`_: Extends SGHMC with a third variable.
+BADODAB:
+^^^^^^^^
+
+`BADODAB`_ scheme for SGNHT: This splitting scheme is a numerical method to solve NHT.
+
+.. _BADODAB: https://arxiv.org/pdf/1505.06889.pdf
 
 .. math::
   \begin{cases}
-  v_{n+1} &= v_n + dt\hat{\nabla} \log \pi(x_n) - \alpha v_n + \sqrt{2a dt}\xi \\
-  x_{n+1} &= x_{n+1} + v_n \\
-  \alpha_{n+1} &= \alpha_n + \frac{1}{p}v_{n+1}^Tv_{n+1} - dt
+  v_{n+1/2} &= v_n +  \frac{dt}{2} \hat{\nabla} \log \pi(x_n) \\
+  x_{n+1/2} &= x_n + \frac{dt}{2}v_{n+1/2} \\
+  \alpha_{n+1/2} &=  \alpha_n + \frac{dt}{2\mu} \left( v_{n+1/2}^Tv_{n+1/2} - D \right) \\
+  \text{if } \alpha_{n+1/2} \neq 0 : \tilde{v}_{n+1/2} &= e^{-\alpha_{n+1/2} dt}v_{n+1/2} + \sigma\sqrt{(1 - e^{-2\alpha_{n+1/2} dt})/ 2\alpha_{n+1/2} } \xi \\
+  \text{else }: \tilde{v}_{n+1/2} &=  v_{n+1/2} + \sigma \sqrt{dt} \xi\\
+  \alpha_{n+1} &=  \alpha_{n+1/2} + \frac{dt}{2\mu} \left( \tilde{v}_{n+1/2}^T \tilde{v}_{n+1/2} - D \right) \\
+  x_{n+1} &= x_{n+1/2} + \frac{dt}{2}\tilde{v}_{n+1/2} \\
+  v_{n+1} &= \tilde{v}_{n+1/2} +  \frac{dt}{2} \hat{\nabla} \log \pi(x_{n+1}) \\
   \end{cases}
 
-.. _Stochastic Gradient Nose-Hoover thermostats: http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
+The tuning parameters are :math:`dt` and :math:`a` (default: :math:`a=0.01`). The two other parameters are fixed: :math:`\mu=1` and :math:`\sigma=1`.
 
+**Pros:** The friction term adapts to the amount of noise in the gradient estimate, and the splitting scheme is more accurate than the Euler method, thus allowing a larger range of step sizes and minitbatch sizes.
 
-
-
-
-
+**Cons:** The sampler has an adaptation time as the friction term needs to match the noise of the gradients
 
 Gradient estimators:
 --------------------
