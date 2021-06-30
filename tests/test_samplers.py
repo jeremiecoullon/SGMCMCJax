@@ -36,10 +36,10 @@ def build_sampler_list(loglikelihood, logprior, param_IC):
 
 list_samplers_param_array = build_sampler_list(loglikelihood_array, logprior_array, jnp.zeros(D))
 list_samplers_param_list_array = build_sampler_list(loglikelihood_list_array, logprior_list_array, [jnp.zeros(D), jnp.zeros(D)])
-list_samplers = list_samplers_param_array + list_samplers_param_list_array
+list_samplers =  list_samplers_param_list_array + list_samplers_param_array
 
-@pytest.mark.parametrize("sam_param", list_samplers)
-def test_sgld(sam_param):
+@pytest.mark.parametrize("sam_param", list_samplers[:])
+def test_all_samplers(sam_param):
     """
     Test all samplers for 2 parameter types:
     1. JAX array: shape (D,)

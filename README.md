@@ -54,4 +54,5 @@ The current list of samplers is:
 - SVRG-SGHMC
 - pSGLD
 - BAOAB
-- SGNHT 
+- SGNHT
+- BADODAB
