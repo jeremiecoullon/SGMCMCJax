@@ -9,7 +9,7 @@ from sgmcmcjax.samplers import build_sghmc_sampler, build_sghmcCV_sampler, build
 from sgmcmcjax.samplers import build_baoab_sampler, build_sgnht_sampler, build_badodab_sampler
 
 # import model and dataset with 2 different parameter shapes
-from sampler_util import X_data, loglikelihood_array, logprior_array, loglikelihood_list_array, logprior_list_array
+from models import X_data, loglikelihood_array, logprior_array, loglikelihood_list_array, logprior_list_array
 
 Ndata, D = X_data.shape
 data = (X_data,)
@@ -38,14 +38,14 @@ list_samplers_param_array = build_sampler_list(loglikelihood_array, logprior_arr
 list_samplers_param_list_array = build_sampler_list(loglikelihood_list_array, logprior_list_array, [jnp.zeros(D), jnp.zeros(D)])
 list_samplers =  list_samplers_param_list_array + list_samplers_param_array
 
-@pytest.mark.parametrize("sam_param", list_samplers[:])
+@pytest.mark.parametrize("sam_param", list_samplers)
 def test_all_samplers(sam_param):
     """
     Test all samplers for 2 parameter types:
     1. JAX array: shape (D,)
     2. list of JAX arrays: shape [(D,), (D,)]
 
-    Check that the samples have the correct shapes and include no Nans.
+    Check that the samples have the correct shapes and that they include no Nans.
     """
     my_sampler, param_IC = sam_param
     key = random.PRNGKey(0)

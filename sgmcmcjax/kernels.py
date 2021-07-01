@@ -21,16 +21,16 @@ def _build_langevin_kernel(update, get_params, estimate_gradient):
 
 def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradient):
     "Build generic sghmc kernel"
-    def body(state, key):
-        k1, k2 = random.split(key)
-        g = estimate_gradient(k1, get_params(state))
-        state = update(0, k2, g, state)
-        return state, None
-
     @jit
     def sghmc_kernel(i, key, state):
+        def body(state, key):
+            k1, k2 = random.split(key)
+            g = estimate_gradient(k1, get_params(state))
+            state = update(i, k2, g, state)
+            return state, None
+
         k1, k2 = random.split(key)
-        state = resample_momentum(k1, state)
+        state = resample_momentum(i, k1, state)
         keys = random.split(k2, L)
         state, _ = lax.scan(body, state, keys)
         return state
@@ -67,7 +67,7 @@ def _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum, estimate_
     def sghmc_kernel(i, key, state):
         k1, k2 = random.split(key)
         state_params, state_svrg = state
-        state_params = resample_momentum(k1, state_params)
+        state_params = resample_momentum(i, k1, state_params)
         keys = random.split(k2, L)
         state, _ = lax.scan(body, (state_params, state_svrg), (jnp.arange(L), keys))
         return state
