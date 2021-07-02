@@ -38,7 +38,6 @@ def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradi
     return sghmc_kernel
 
 # generic SVRG kernel builders:
-
 def _build_langevin_SVRG_kernel(update, get_params, estimate_gradient):
     "build generic overdamped SVRG kernel"
 
@@ -92,7 +91,6 @@ def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
 # kernels
 # =======
 
-# def build_sgld_kernel(dt, grad_log_post, data, batch_size):
 def build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update, get_params = sgld(dt)

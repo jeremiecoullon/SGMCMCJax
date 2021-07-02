@@ -8,7 +8,7 @@ from jax.tree_util import tree_flatten, tree_unflatten, tree_map, tree_multimap
 # standard gradient estimator
 def build_gradient_estimation_fn(grad_log_post, data, batch_size):
     assert type(data) == tuple
-    N_data,_ = data[0].shape
+    N_data, *_ = data[0].shape
 
     @jit
     def estimate_gradient(key, param):
@@ -23,7 +23,7 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
 # Control variates
 def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value):
     assert type(data) == tuple
-    N_data,_ = data[0].shape
+    N_data, *_ = data[0].shape
 
     fb_grad_center = grad_log_post(centering_value, *data)
     flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
@@ -49,7 +49,7 @@ SVRGState = namedtuple("SGVRState", ['centering_value', 'update_rate', 'fb_grad_
 
 def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate):
     assert type(data) == tuple
-    N_data,_ = data[0].shape
+    N_data, *_ = data[0].shape
     update_fn = lambda c,g,gc: c + g - gc
 
     def update_centering_value(state, param):

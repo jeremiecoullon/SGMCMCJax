@@ -58,7 +58,6 @@ Table of contents
     nbs/kernel
     nbs/diffusion
 
-
 .. toctree::
      :maxdepth: 1
      :caption: Examples
@@ -67,10 +66,15 @@ Table of contents
      nbs/logistic_regression
      nbs/BNN
 
-
-
 .. toctree::
       :maxdepth: 1
       :caption: Samplers
 
       all_samplers
+
+.. toctree::
+      :maxdepth: 1
+      :caption: Add a sampler to SGMCMCJax
+
+      add_a_sampler
+      add_sampler_special_cases
