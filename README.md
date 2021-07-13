@@ -53,6 +53,13 @@ The current list of samplers is:
 - SGHMC-CV
 - SVRG-SGHMC
 - pSGLD
+- SGLDAdam
 - BAOAB
 - SGNHT
 - BADODAB
+
+
+## Installation
+
+- To work on the package set up a virtual environment and run `python setup.py develop`
+- To run the tests run `python setup.py test`

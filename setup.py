@@ -26,4 +26,6 @@ setup(
            "tqdm"
         ],
     extras_require=EXTRAS,
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest']
 )
