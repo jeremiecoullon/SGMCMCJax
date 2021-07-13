@@ -3,7 +3,7 @@ import functools
 import jax.numpy as jnp
 from jax import jit, lax, random
 
-from .diffusions import sgld, psgld, sghmc, baoab, sgnht, badodab
+from .diffusions import sgld, psgld, sgldAdam, sghmc, baoab, sgnht, badodab
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG
 from .util import build_grad_log_post
 
@@ -130,6 +130,14 @@ def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99
     sgld_kernel = _build_langevin_kernel(update, get_params, estimate_gradient)
     return init_fn, sgld_kernel, get_params
 
+
+def build_sgldAdam_kernel(dt, loglikelihood, logprior, data, batch_size, beta1=0.9, beta2=0.999, eps=1e-8):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    init_fn, update, get_params = sgldAdam(dt, beta1, beta2, eps)
+    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    sgldAdam_kernel = _build_langevin_kernel(update, get_params, estimate_gradient)
+    return init_fn, sgldAdam_kernel, get_params
+
 def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
@@ -178,7 +186,6 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau
 
     return new_init_fn, baoab_kernel, new_get_params
 
-# def build_sgld_kernel(dt, grad_log_post, data, batch_size):
 def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update, get_params = sgnht(dt, a)

@@ -9,6 +9,8 @@ from jax.tree_util import tree_flatten, tree_unflatten, tree_map, tree_multimap
 def build_gradient_estimation_fn(grad_log_post, data, batch_size):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
+    # make sure data has jax arrays rather than numpy arrays
+    data = tuple([jnp.array(elem) for elem in data])
 
     @jit
     def estimate_gradient(key, param):
@@ -24,11 +26,14 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
 def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
+    # make sure data has jax arrays rather than numpy arrays
+    data = tuple([jnp.array(elem) for elem in data])
 
     fb_grad_center = grad_log_post(centering_value, *data)
     flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
     update_fn = lambda c,g,gc: c + g - gc
 
+    @jit
     def estimate_gradient(key, param):
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
         minibatch_data = tuple([elem[idx_batch] for elem in data])
@@ -50,6 +55,8 @@ SVRGState = namedtuple("SGVRState", ['centering_value', 'update_rate', 'fb_grad_
 def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
+    # make sure data has jax arrays rather than numpy arrays
+    data = tuple([jnp.array(elem) for elem in data])
     update_fn = lambda c,g,gc: c + g - gc
 
     def update_centering_value(state, param):
