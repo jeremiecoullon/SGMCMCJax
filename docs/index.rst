@@ -65,6 +65,7 @@ Table of contents
      nbs/gaussian
      nbs/logistic_regression
      nbs/BNN
+     nbs/Flax_MNIST
 
 .. toctree::
       :maxdepth: 1
