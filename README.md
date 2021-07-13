@@ -61,5 +61,8 @@ The current list of samplers is:
 
 ## Installation
 
-- To work on the package set up a virtual environment and run `python setup.py develop`
+- To work on the package:
+  - Clone the repo: `git clone https://github.com/jeremiecoullon/SGMCMCJax.git`
+  - Set up a virtual environment
+  - Run `python setup.py develop`
 - To run the tests run `python setup.py test`
