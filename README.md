@@ -61,11 +61,23 @@ The current list of samplers is:
 
 ## Installation
 
-Create a virtual environment before installing the package:
+Create a virtual environment and either install a stable version using pip or install the development version.
+
+### Stable version
+
+To install the latest stable version run:
+
+```
+pip install sgmcmcjax
+```
+
+### Development version
+
+To install the development version run:
 
 ```
 git clone https://github.com/jeremiecoullon/SGMCMCJax.git
 cd SGMCMCJax
 python setup.py develop
 ```
-Then run the tests with `python setup.py test`
+Then run the tests with `pip install pytest; make`
