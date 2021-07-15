@@ -1,4 +1,11 @@
 from setuptools import setup
+import pathlib
+
+# The directory containing this file
+HERE = pathlib.Path(__file__).parent
+
+# The text of the README file
+README = (HERE / "README.md").read_text()
 
 EXTRAS = {
     "tests": [
@@ -18,8 +25,12 @@ setup(
     version='0.1.0',
     author='Jeremie Coullon',
     author_email='jeremie.coullon@gmail.com',
+    packages=find_packages(".", exclude=["tests"]),
     license='LICENSE.txt',
     description='SGMCMC samplers in JAX',
+    long_description=README,
+    long_description_content_type="text/markdown",
+    url="https://sgmcmcjax.readthedocs.io/en/latest/index.html",
     install_requires=[
            "jax",
            "jaxlib",
