@@ -39,8 +39,10 @@ def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradi
             for key in keys:
                 state, _ = body(state, key)
             return state
-
-    return sghmc_kernel
+    if compiled_leapfrog:
+        return jit(sghmc_kernel)
+    else:
+        return sghmc_kernel
 
 # generic SVRG kernel builders:
 def _build_langevin_SVRG_kernel(update, get_params, estimate_gradient):
