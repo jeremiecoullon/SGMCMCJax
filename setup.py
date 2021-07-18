@@ -30,7 +30,7 @@ setup(
     description='SGMCMC samplers in JAX',
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://sgmcmcjax.readthedocs.io/en/latest/index.html",
+    url="https://github.com/jeremiecoullon/SGMCMCJax",
     install_requires=[
            "jax",
            "jaxlib",
