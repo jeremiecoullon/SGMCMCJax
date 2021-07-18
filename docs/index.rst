@@ -79,3 +79,10 @@ Table of contents
 
       add_a_sampler
       add_sampler_special_cases
+
+
+.. toctree::
+      :maxdepth: 1
+      :caption: FAQ
+
+      FAQ
