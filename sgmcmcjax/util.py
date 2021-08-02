@@ -18,6 +18,20 @@ def build_grad_log_post(loglikelihood, logprior, data):
     grad_log_post = jit(grad(log_post))
     return grad_log_post
 
+def run_loop(f, state, xs, compiled=True):
+    """
+    Loop over an iterable and keep only the final state
+    the function `f` should return `(state, None)`
+    compiled: whether or not to run lax.scan or a Python loop
+    """
+    if compiled:
+        state, _ = lax.scan(f, state, xs)
+        return state
+    else:
+        for x in xs:
+            state, _ = f(state, x)
+        return state
+
 
 def progress_bar_scan(num_samples, message=None):
     "Progress bar for a JAX scan"

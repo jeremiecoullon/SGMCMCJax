@@ -5,7 +5,7 @@ from jax import jit, lax, random
 
 from .diffusions import sgld, psgld, sgldAdam, sghmc, baoab, sgnht, badodab
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG
-from .util import build_grad_log_post
+from .util import build_grad_log_post, run_loop
 
 def _build_langevin_kernel(update, get_params, estimate_gradient):
     "build generic kernel"
@@ -32,13 +32,8 @@ def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradi
         k1, k2 = random.split(key)
         state = resample_momentum(i, k1, state)
         keys = random.split(k2, L)
-        if compiled_leapfrog:
-            state, _ = lax.scan(body, state, keys)
-            return state
-        else:
-            for key in keys:
-                state, _ = body(state, key)
-            return state
+        state = run_loop(body, state, keys, compiled_leapfrog)
+        return state
     if compiled_leapfrog:
         return jit(sghmc_kernel)
     else:
@@ -75,13 +70,8 @@ def _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum, estimate_
         state_params = resample_momentum(i, k1, state_params)
         keys = random.split(k2, L)
         state = (state_params, state_svrg)
-        if compiled_leapfrog:
-            state, _ = lax.scan(body, state, (jnp.arange(L), keys))
-            return state
-        else:
-            for key in keys:
-                state, _ = body(state, key)
-            return state
+        state = run_loop(body, state, (jnp.arange(L), keys), compiled_leapfrog)
+        return state
 
     return sghmc_kernel
 
