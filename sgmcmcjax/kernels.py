@@ -1,5 +1,4 @@
-from collections import namedtuple
-import functools
+
 import jax.numpy as jnp
 from jax import jit, lax, random
 
