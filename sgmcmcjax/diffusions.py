@@ -4,15 +4,16 @@ import jax.numpy as jnp
 from jax import grad, jit, vmap, lax, random, partial
 from jax.tree_util import tree_flatten, tree_unflatten, tree_map, register_pytree_node
 from jax._src.util import safe_map, unzip2
+from .types import DiffusionState
 
 map = safe_map
-
-DiffusionState = namedtuple("DiffusionState", ['packed_state', 'tree_def', 'subtree_defs'])
-
-register_pytree_node(
-    DiffusionState,
-    lambda xs: ((xs.packed_state,), (xs.tree_def, xs.subtree_defs)),
-    lambda data, xs : DiffusionState(xs[0], data[0], data[1]))
+#
+# DiffusionState = namedtuple("DiffusionState", ['packed_state', 'tree_def', 'subtree_defs'])
+#
+# register_pytree_node(
+#     DiffusionState,
+#     lambda xs: ((xs.packed_state,), (xs.tree_def, xs.subtree_defs)),
+#     lambda data, xs : DiffusionState(xs[0], data[0], data[1]))
 
 def diffusion_factory(is_palindrome=False, is_sghmc=False):
     def _diffusion(sampler_maker):

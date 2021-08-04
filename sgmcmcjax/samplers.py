@@ -24,7 +24,8 @@ def _build_compiled_sampler(init_fn, my_kernel, get_params):
             state = my_kernel(i, subkey, state)
             return (key, state), get_params(state)
 
-        state = init_fn(params)
+        key, subkey = random.split(key)
+        state = init_fn(subkey, params)
         (_, _), samples = lax.scan(body, (key, state), jnp.arange(Nsamples))
         return samples
     return sampler
@@ -33,7 +34,8 @@ def _build_noncompiled_sampler(init_fn, my_kernel, get_params):
     "Build generic non-compiled sampler"
     def sampler(key, Nsamples, params):
         samples = []
-        state = init_fn(params)
+        key, subkey = random.split(key)
+        state = init_fn(subkey, params)
 
         for i in tqdm(range(Nsamples)):
             key, subkey = random.split(key)

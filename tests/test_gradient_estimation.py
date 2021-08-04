@@ -17,8 +17,9 @@ def test_fullbatch_standard_estimator():
     batch_size = X_data.shape[0]
     estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     key = random.PRNGKey(0)
-    mygrad = estimate_gradient(key, jnp.zeros(D))
+    mygrad, svrg_state = estimate_gradient(key, jnp.zeros(D))
     assert jnp.array_equal(mygrad, grad_log_post(params, *data))
+    assert svrg_state is None
 
 def test_standard_estimator_shape():
     "Check shapes for the standard estimator"
@@ -26,9 +27,10 @@ def test_standard_estimator_shape():
     batch_size = int(0.1*X_data.shape[0])
     grad_log_post = build_grad_log_post(loglikelihood_array, logprior_array, data)
     estimate_gradient_standard = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    mygrad = estimate_gradient_standard(random.PRNGKey(0), params)
+    mygrad, svrg_state = estimate_gradient_standard(random.PRNGKey(0), params)
     assert type(mygrad) == type(params)
     assert jnp.shape(mygrad) == jnp.shape(params)
+    assert svrg_state is None
 
 
 def test_CV_standard_estimator():
@@ -37,9 +39,10 @@ def test_CV_standard_estimator():
     batch_size = int(0.1*X_data.shape[0])
     grad_log_post = build_grad_log_post(loglikelihood_array, logprior_array, data)
     estimate_gradient_CV = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, params)
-    mygrad = estimate_gradient_CV(random.PRNGKey(0), params)
+    mygrad, svrg_state = estimate_gradient_CV(random.PRNGKey(0), params)
     assert type(mygrad) == type(params)
     assert jnp.shape(mygrad) == jnp.shape(params)
+    assert svrg_state is None
 
 
 def test_SVRG_estimator_shape():
@@ -63,7 +66,7 @@ def test_standard_estimator_data_np_array():
     data = (np.array(X_data),)
     grad_log_post = build_grad_log_post(loglikelihood_array, logprior_array, data)
     estimate_gradient_standard = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    mygrad = estimate_gradient_standard(random.PRNGKey(0), params)
+    mygrad, state_svrg = estimate_gradient_standard(random.PRNGKey(0), params)
     assert type(mygrad) == type(params)
     assert jnp.shape(mygrad) == jnp.shape(params)
 
@@ -74,7 +77,7 @@ def test_CV_data_np_array():
     data = (np.array(X_data),)
     grad_log_post = build_grad_log_post(loglikelihood_array, logprior_array, data)
     estimate_gradient_CV = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, params)
-    mygrad = estimate_gradient_CV(random.PRNGKey(0), params)
+    mygrad, state_svrg = estimate_gradient_CV(random.PRNGKey(0), params)
     assert type(mygrad) == type(params)
     assert jnp.shape(mygrad) == jnp.shape(params)
 
