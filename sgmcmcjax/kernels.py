@@ -80,10 +80,10 @@ def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
     @jit
     def kernel(i, key, state):
         state_params, param_grad = state
-        k1, k2 = random.split(key)
-        state_params = update1(i, k2, param_grad, state_params)
-        param_grad = estimate_gradient(k1, get_params(state_params))
-        state_params = update2(i, k2, param_grad, state_params) # the random key k2 isn't used in update2
+        k1, k2, k3 = random.split(key, 3)
+        state_params = update1(i, k1, param_grad, state_params)
+        param_grad = estimate_gradient(k2, get_params(state_params))
+        state_params = update2(i, k3, param_grad, state_params) 
         return (state_params, param_grad)
 
     return kernel
