@@ -19,12 +19,11 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
         param_grad = grad_log_post(param, *minibatch_data)
         return param_grad, SVRGState()
 
-    # def estimate_gradient(key, param):
-    @partial(jit, static_argnums=(3,))
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
-       param = get_params_diffusion(state.diffusion_state)
+
+    @jit
+    def estimate_gradient(i: int, key: PRNGKey, param: PyTree, svrg_state: SVRGState = SVRGState()) -> Tuple[PyTree, SVRGState]:
        if (batch_size is None) or batch_size == N_data:
-           return grad_log_post(param, *data), None
+           return grad_log_post(param, *data), svrg_state
        else:
            return init_gradient(key, param)
 
@@ -52,9 +51,8 @@ def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_v
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)
         return param_grad, SVRGState()
 
-    @partial(jit, static_argnums=(3,))
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
-        param = get_params_diffusion(state.diffusion_state)
+    @jit
+    def estimate_gradient(i: int, key: PRNGKey, param: PyTree, svrg_state: SVRGState = SVRGState()) -> Tuple[PyTree, SVRGState]:
         return init_gradient(key, param)
 
     return estimate_gradient, init_gradient
@@ -77,10 +75,8 @@ def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data, batch_size,
         svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
         return fb_grad_center, svrg_state
 
-    @partial(jit, static_argnums=(3,))
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
-        param = get_params_diffusion(state.diffusion_state)
-        svrg_state = state.svrg_state
+    @jit
+    def estimate_gradient(i: int, key: PRNGKey, param: PyTree, svrg_state: SVRGState) -> Tuple[PyTree, SVRGState]:
         svrg_state = lax.cond(i%update_rate == 0,
                     lambda _: update_centering_value(param),
                     lambda _ : svrg_state,

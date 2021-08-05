@@ -26,11 +26,11 @@ register_pytree_node(
 class SVRGState(NamedTuple):
     centering_value: Any = None
     update_rate: Any = None
-    fb_grad_center: Any = None # this is empty by default
+    fb_grad_center: Any = None
 
 
 class SamplerState(NamedTuple):
     diffusion_state: DiffusionState
     param_grad: PyTree
-    svrg_state: SVRGState = SVRGState() # this is empty by default
+    svrg_state: SVRGState = SVRGState()
     grad_info: Optional[Any] = None

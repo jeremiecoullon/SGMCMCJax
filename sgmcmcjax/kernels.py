@@ -15,8 +15,6 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
 
     def init_fn(key: PRNGKey, params:PyTree):
         diffusion_state = init_fn_diffusion(params)
-        # state = SamplerState(diffusion_state, params) # pass in params in place of param_grads as you don't have it yet
-        # param_grad, svrg_state = estimate_gradient(0, key, state, get_params_diffusion)
         param_grad, svrg_state = init_gradient(key, params)
         return SamplerState(diffusion_state, param_grad, svrg_state, None)
 
@@ -27,8 +25,8 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
         param_grad, svrg_state = estimate_gradient(
                                                 i,
                                                 k2,
-                                                SamplerState(diffusion_state, param_grad, svrg_state, grad_info),
-                                                get_params_diffusion
+                                                get_params_diffusion(diffusion_state),
+                                                svrg_state
                                             )
         return SamplerState(diffusion_state, param_grad, svrg_state, grad_info)
 
@@ -38,19 +36,6 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
     return init_fn, kernel, get_params
 
 
-# generic SVRG kernel builders:
-# def _build_langevin_SVRG_kernel(update: Callable, get_params: Callable, estimate_gradient: Callable):
-#     "build generic overdamped SVRG kernel"
-#
-#     @jit
-#     def kernel(i, key, state):
-#         state_params, state_svrg = state
-#         k1, k2 = random.split(key)
-#         param_grad, state_svrg = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg, grad_info), get_params(state_params))
-#         state_params = update(i, k2, param_grad, state_params)
-#         return (state_params, state_svrg)
-#
-#     return kernel
 
 
 
