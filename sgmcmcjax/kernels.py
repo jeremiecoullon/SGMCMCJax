@@ -3,10 +3,10 @@ from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
 import jax.numpy as jnp
 from jax import jit, lax, random
 
-from .diffusions import sgld, psgld, sgldAdam, sghmc, baoab, sgnht, badodab, DiffusionState
+from .diffusions import sgld, psgld, sgldAdam, sghmc, baoab, sgnht, badodab
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG, SVRGState
 from .util import build_grad_log_post, run_loop
-from .types import PyTree, PRNGKey, SamplerState, SVRGState
+from .types import PyTree, PRNGKey, SamplerState, SVRGState, DiffusionState
 
 
 
