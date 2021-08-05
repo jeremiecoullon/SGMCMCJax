@@ -15,6 +15,13 @@ def welling_teh_schedule(a,b, gamma=0.55):
         return a*(b+i)**(-gamma)
     return schedule
 
+def cyclical_schedule(alpha_0, M, K):
+    "https://arxiv.org/abs/1902.03932"
+    def schedule(i):
+        mod_term = (i-1) % jnp.ceil(K/M)
+        return alpha_0*0.5*(jnp.cos( jnp.pi*mod_term /jnp.ceil(K/M) ) + 1)
+    return schedule
+
 def make_schedule(scalar_or_schedule):
     if callable(scalar_or_schedule):
         return scalar_or_schedule
