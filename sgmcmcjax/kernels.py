@@ -9,13 +9,15 @@ from .util import build_grad_log_post, run_loop
 from .types import PyTree, PRNGKey, SamplerState, SVRGState
 
 
-def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callable, get_params_diffusion: Callable, estimate_gradient: Callable):
+def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
+                    get_params_diffusion: Callable, estimate_gradient: Callable, init_gradient: Callable):
     "build generic kernel"
 
     def init_fn(key: PRNGKey, params:PyTree):
         diffusion_state = init_fn_diffusion(params)
-        state = SamplerState(diffusion_state, params) # pass in params in place of param_grads as you don't have it yet
-        param_grad, svrg_state = estimate_gradient(0, key, state, get_params_diffusion)
+        # state = SamplerState(diffusion_state, params) # pass in params in place of param_grads as you don't have it yet
+        # param_grad, svrg_state = estimate_gradient(0, key, state, get_params_diffusion)
+        param_grad, svrg_state = init_gradient(key, params)
         return SamplerState(diffusion_state, param_grad, svrg_state, None)
 
     def kernel(i: int, key: PRNGKey, state: SamplerState) -> SamplerState:
@@ -114,20 +116,20 @@ def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
 
 def build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    init_fn, sgld_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgld_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgld_kernel, get_params
 
 def build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
-    init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
+    init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgldCV_kernel, get_params
 
 def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate)
-    init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate)
+    init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgldSVRG_kernel, get_params
 
 
@@ -149,15 +151,15 @@ def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, center
 
 def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99, eps=1e-5):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    init_fn, sgld_kernel, get_params = _build_langevin_kernel(*psgld(dt, alpha, eps), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgld_kernel, get_params = _build_langevin_kernel(*psgld(dt, alpha, eps), estimate_gradient, init_gradient)
     return init_fn, sgld_kernel, get_params
 
 
 def build_sgldAdam_kernel(dt, loglikelihood, logprior, data, batch_size, beta1=0.9, beta2=0.999, eps=1e-8):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    init_fn, sgldAdam_kernel, get_params = _build_langevin_kernel(*sgldAdam(dt, beta1, beta2, eps), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgldAdam_kernel, get_params = _build_langevin_kernel(*sgldAdam(dt, beta1, beta2, eps), estimate_gradient, init_gradient)
     return init_fn, sgldAdam_kernel, get_params
 
 def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True):
@@ -207,7 +209,7 @@ def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size,
 def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update1, update2, get_params = baoab(dt, gamma)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     baoab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
 
     def new_init_fn(key, params):
@@ -222,8 +224,8 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau
 
 def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
     return init_fn, sgnht_kernel, get_params
 
 

@@ -11,39 +11,36 @@ from .types import PyTree, PRNGKey, SamplerState, SVRGState
 def build_gradient_estimation_fn(grad_log_post, data, batch_size):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
-    # make sure data has jax arrays rather than numpy arrays
-    data = tuple([jnp.array(elem) for elem in data])
+    data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
+
+    def init_gradient(key: PRNGKey, param: PyTree):
+        idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
+        minibatch_data = tuple([elem[idx_batch] for elem in data])
+        param_grad = grad_log_post(param, *minibatch_data)
+        return param_grad, SVRGState()
 
     # def estimate_gradient(key, param):
     @partial(jit, static_argnums=(3,))
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
-       # TODO: make this signature the same for all gradient estimators, fix tests
+    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
        param = get_params_diffusion(state.diffusion_state)
        if (batch_size is None) or batch_size == N_data:
            return grad_log_post(param, *data), None
        else:
-           idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
-           minibatch_data = tuple([elem[idx_batch] for elem in data])
-           return grad_log_post(param, *minibatch_data), None # return a tuple with None to be compatible with SVRG
+           return init_gradient(key, param)
 
-    return estimate_gradient
+    return estimate_gradient, init_gradient
 
 # Control variates
 def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
-    # make sure data has jax arrays rather than numpy arrays
-    data = tuple([jnp.array(elem) for elem in data])
+    data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
 
     fb_grad_center = grad_log_post(centering_value, *data)
     flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
     update_fn = lambda c,g,gc: c + g - gc
 
-    # @jit
-    # def estimate_gradient(key, param):
-    @partial(jit, static_argnums=(3,))
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
-        param = get_params_diffusion(state.diffusion_state)
+    def init_gradient(key: PRNGKey, param: PyTree):
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
         minibatch_data = tuple([elem[idx_batch] for elem in data])
 
@@ -53,50 +50,42 @@ def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_v
         flat_grad_center, tree_grad_center = tree_flatten(grad_center)
         new_flat_param_grad = tree_multimap(update_fn, flat_fb_grad_center, flat_param_grad, flat_grad_center)
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)
-        return param_grad, None
+        return param_grad, SVRGState()
 
-    return estimate_gradient
+    @partial(jit, static_argnums=(3,))
+    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
+        param = get_params_diffusion(state.diffusion_state)
+        return init_gradient(key, param)
 
-# # SVRG
-# SVRGState = namedtuple("SVRGState", ['centering_value', 'update_rate', 'fb_grad_center'],
-#                        defaults=(None, None, None))
+    return estimate_gradient, init_gradient
 
-def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate):
+def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data, batch_size, centering_value, update_rate: int):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
-    # make sure data has jax arrays rather than numpy arrays
-    data = tuple([jnp.array(elem) for elem in data])
+    data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
     update_fn = lambda c,g,gc: c + g - gc
 
-    def update_centering_value(svrg_state: SVRGState, param: PyTree) -> SVRGState:
+    def update_centering_value(param: PyTree) -> SVRGState:
         fb_grad_center = grad_log_post(param, *data)
         flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
         svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
         return svrg_state
 
+    def init_gradient(key: PRNGKey, param: PyTree) -> Tuple[PyTree, SVRGState]:
+        fb_grad_center = grad_log_post(param, *data)
+        flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
+        svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
+        return fb_grad_center, svrg_state
 
-    # def estimate_gradient(key, param, i, state):
     @partial(jit, static_argnums=(3,))
-    # def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
-    def estimate_gradient(i, key, state, get_params_diffusion):
+    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, SVRGState]:
         param = get_params_diffusion(state.diffusion_state)
         svrg_state = state.svrg_state
-        # fb_grad_center = jnp.where(svrg_state.fb_grad_center is None, tree_flatten(param)[0], svrg_state.fb_grad_center) # BUG: svrg_state.fb_grad_center will be None by default
-        # svrg_state = lax.cond(i%update_rate == 0,
-        #             lambda _: update_centering_value(svrg_state, param),
-        #             # lambda _ : SVRGState(param, update_rate, fb_grad_center), # BUG: svrg_state.fb_grad_center will be None by default
-        #             lambda _ : svrg_state,
-        #             None
-        #         )
-        print(f"\n\n\nTYPE======= {update_centering_value(svrg_state, param)}\n\n\n{svrg_state}")
-        svrg_state = jnp.where(i%update_rate == 0,
-        # jnp.zeros(5), jnp.zeros(5)
-        update_centering_value(svrg_state, param),
-        svrg_state
-                    # update_centering_value(svrg_state, param),
-                    # svrg_state
+        svrg_state = lax.cond(i%update_rate == 0,
+                    lambda _: update_centering_value(param),
+                    lambda _ : svrg_state,
+                    None
                 )
-
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
         minibatch_data = tuple([elem[idx_batch] for elem in data])
 
@@ -108,5 +97,4 @@ def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)
         return param_grad, svrg_state
 
-    # state = update_centering_value(SVRGState(None, update_rate, None), centering_value)
-    return estimate_gradient#, state
+    return estimate_gradient, init_gradient
