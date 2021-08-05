@@ -2,36 +2,7 @@ import jax.numpy as jnp
 from jax import lax, random
 from .diffusion_util import diffusion, diffusion_sghmc, diffusion_palindrome
 
-# ========
-# step size schedules
-def constant(step_size):
-    def schedule(i):
-        return step_size
-    return schedule
-
-def welling_teh_schedule(a,b, gamma=0.55):
-    "Polynomial schedule from https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf"
-    def schedule(i):
-        return a*(b+i)**(-gamma)
-    return schedule
-
-def cyclical_schedule(alpha_0, M, K):
-    "https://arxiv.org/abs/1902.03932"
-    def schedule(i):
-        mod_term = (i-1) % jnp.ceil(K/M)
-        return alpha_0*0.5*(jnp.cos( jnp.pi*mod_term /jnp.ceil(K/M) ) + 1)
-    return schedule
-
-def make_schedule(scalar_or_schedule):
-    if callable(scalar_or_schedule):
-        return scalar_or_schedule
-    elif jnp.ndim(scalar_or_schedule) == 0:
-        return constant(scalar_or_schedule)
-    else:
-        raise TypeError(type(scalar_or_schedule))
-
-# ========
-# diffusions
+### diffusions
 
 @diffusion
 def sgld(dt):
@@ -228,3 +199,31 @@ def badodab(dt, a=0.01):
         return x
 
     return init_fn, (update, update2), get_params
+
+
+### step size schedules
+def constant(step_size):
+    def schedule(i):
+        return step_size
+    return schedule
+
+def welling_teh_schedule(a,b, gamma=0.55):
+    "Polynomial schedule from https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf"
+    def schedule(i):
+        return a*(b+i)**(-gamma)
+    return schedule
+
+def cyclical_schedule(alpha_0, M, K):
+    "https://arxiv.org/abs/1902.03932"
+    def schedule(i):
+        mod_term = (i-1) % jnp.ceil(K/M)
+        return alpha_0*0.5*(jnp.cos( jnp.pi*mod_term /jnp.ceil(K/M) ) + 1)
+    return schedule
+
+def make_schedule(scalar_or_schedule):
+    if callable(scalar_or_schedule):
+        return scalar_or_schedule
+    elif jnp.ndim(scalar_or_schedule) == 0:
+        return constant(scalar_or_schedule)
+    else:
+        raise TypeError(type(scalar_or_schedule))

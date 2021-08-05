@@ -68,9 +68,7 @@ def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
     return init_fn, sghmc_kernel, get_params
 
 
-# =======
-# kernels
-# =======
+### kernels
 
 def build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
@@ -96,13 +94,11 @@ def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99
     init_fn, sgld_kernel, get_params = _build_langevin_kernel(*psgld(dt, alpha, eps), estimate_gradient, init_gradient)
     return init_fn, sgld_kernel, get_params
 
-
 def build_sgldAdam_kernel(dt, loglikelihood, logprior, data, batch_size, beta1=0.9, beta2=0.999, eps=1e-8):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     init_fn, sgldAdam_kernel, get_params = _build_langevin_kernel(*sgldAdam(dt, beta1, beta2, eps), estimate_gradient, init_gradient)
     return init_fn, sgldAdam_kernel, get_params
-
 
 def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
@@ -110,13 +106,11 @@ def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
     return init_fn, sgnht_kernel, get_params
 
-
 def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(*baoab(dt, gamma, tau), estimate_gradient, init_gradient)
     return init_fn, baoab_kernel, get_params
-
 
 def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
@@ -124,7 +118,6 @@ def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(*badodab(dt, a), estimate_gradient, init_gradient)
     return init_fn, baoab_kernel, get_params
 
-# ==================
 # sghmc kernels
 
 def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True):
