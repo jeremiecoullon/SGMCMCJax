@@ -56,19 +56,27 @@ def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
     return init_fn, sghmc_kernel, get_params
 
 
-def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
-    "build generic palindrome kernel"
+def _build_palindrome_kernel(init_fn_diffusion: Callable, update_diffusion1: Callable, update_diffusion2: Callable,
+                    get_params_diffusion: Callable, estimate_gradient: Callable, init_gradient: Callable) -> Tuple[Callable, Callable, Callable]:
 
-    @jit
-    def kernel(i, key, state):
-        state_params, param_grad = state
-        k1, k2, k3 = random.split(key, 3)
-        state_params = update1(i, k1, param_grad, state_params)
-        param_grad, _ = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg), get_params)
-        state_params = update2(i, k3, param_grad, state_params)
-        return (state_params, param_grad)
+    def init_fn(key: PRNGKey, params:PyTree):
+        diffusion_state = init_fn_diffusion(params)
+        param_grad, svrg_state = init_gradient(key, params)
+        return SamplerState(diffusion_state, param_grad, svrg_state, None)
 
-    return kernel
+    def kernel(i: int, key: PRNGKey, state: SamplerState) -> SamplerState:
+        diffusion_state, param_grad, svrg_state, grad_info = state
+        k1, k2 = random.split(key)
+        diffusion_state = update_diffusion1(i, k1, param_grad, diffusion_state)
+        param_grad, svrg_state = estimate_gradient(i, k2, get_params_diffusion(diffusion_state), svrg_state)
+        diffusion_state = update_diffusion2(i, k1, param_grad, diffusion_state)
+        return SamplerState(diffusion_state, param_grad, svrg_state, grad_info)
+
+    def get_params(state: SamplerState):
+        return get_params_diffusion(state.diffusion_state)
+
+    return init_fn, kernel, get_params
+
 
 # =======
 # kernels
@@ -92,7 +100,6 @@ def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, center
     init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgldSVRG_kernel, get_params
 
-
 def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99, eps=1e-5):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
@@ -113,6 +120,8 @@ def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
     return init_fn, sgnht_kernel, get_params
 
+# ==================
+# sghmc kernels
 
 def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
@@ -136,36 +145,18 @@ def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, ce
                                                     init_gradient, L, compiled_leapfrog=compiled_leapfrog)
     return init_fn, sghmc_kernel, get_params
 
+# ==================
+# palindrome kernels
 
 def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update1, update2, get_params = baoab(dt, gamma)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    baoab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
-
-    def new_init_fn(key, params):
-        param_grads = grad_log_post(params, *data)
-        return (init_fn(params), param_grads)
-
-    def new_get_params(state):
-        state_params, _ = state
-        return get_params(state_params)
-
-    return new_init_fn, baoab_kernel, new_get_params
+    init_fn, baoab_kernel, get_params = _build_palindrome_kernel(*baoab(dt, gamma, tau), estimate_gradient, init_gradient)
+    return init_fn, baoab_kernel, get_params
 
 
 def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update1, update2, get_params = badodab(dt, a)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    badodab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
-
-    def new_init_fn(key, params):
-        param_grads = grad_log_post(params, *data)
-        return (init_fn(params), param_grads)
-
-    def new_get_params(state):
-        state_params, _ = state
-        return get_params(state_params)
-
-    return new_init_fn, badodab_kernel, new_get_params
+    init_fn, baoab_kernel, get_params = _build_palindrome_kernel(*badodab(dt, a), estimate_gradient, init_gradient)
+    return init_fn, baoab_kernel, get_params
