@@ -6,7 +6,7 @@ from jax import jit, lax, random
 from .diffusions import sgld, psgld, sgldAdam, sghmc, baoab, sgnht, badodab, DiffusionState
 from .gradient_estimation import build_gradient_estimation_fn, build_gradient_estimation_fn_CV, build_gradient_estimation_fn_SVRG, SVRGState
 from .util import build_grad_log_post, run_loop
-from .types import PyTree, PRNGKey, SamplerState
+from .types import PyTree, PRNGKey, SamplerState, SVRGState
 
 
 def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callable, get_params_diffusion: Callable, estimate_gradient: Callable):
@@ -14,15 +14,20 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
 
     def init_fn(key: PRNGKey, params:PyTree):
         diffusion_state = init_fn_diffusion(params)
-        param_grad, svrg_state = estimate_gradient(0, key, get_params_diffusion(diffusion_state))
+        state = SamplerState(diffusion_state, params) # pass in params in place of param_grads as you don't have it yet
+        param_grad, svrg_state = estimate_gradient(0, key, state, get_params_diffusion)
         return SamplerState(diffusion_state, param_grad, svrg_state, None)
 
     def kernel(i: int, key: PRNGKey, state: SamplerState) -> SamplerState:
         diffusion_state, param_grad, svrg_state, grad_info = state
         k1, k2 = random.split(key)
         diffusion_state = update_diffusion(i, k1, param_grad, diffusion_state)
-        state = SamplerState(diffusion_state, param_grad, svrg_state, grad_info)
-        param_grad, svrg_state = estimate_gradient(i, k2, state, get_params_diffusion)
+        param_grad, svrg_state = estimate_gradient(
+                                                i,
+                                                k2,
+                                                SamplerState(diffusion_state, param_grad, svrg_state, grad_info),
+                                                get_params_diffusion
+                                            )
         return SamplerState(diffusion_state, param_grad, svrg_state, grad_info)
 
     def get_params(state: SamplerState):
@@ -32,18 +37,18 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
 
 
 # generic SVRG kernel builders:
-def _build_langevin_SVRG_kernel(update: Callable, get_params: Callable, estimate_gradient: Callable):
-    "build generic overdamped SVRG kernel"
-
-    @jit
-    def kernel(i, key, state):
-        state_params, state_svrg = state
-        k1, k2 = random.split(key)
-        param_grad, state_svrg = estimate_gradient(k1, get_params(state_params), i, state_svrg)
-        state_params = update(i, k2, param_grad, state_params)
-        return (state_params, state_svrg)
-
-    return kernel
+# def _build_langevin_SVRG_kernel(update: Callable, get_params: Callable, estimate_gradient: Callable):
+#     "build generic overdamped SVRG kernel"
+#
+#     @jit
+#     def kernel(i, key, state):
+#         state_params, state_svrg = state
+#         k1, k2 = random.split(key)
+#         param_grad, state_svrg = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg, grad_info), get_params(state_params))
+#         state_params = update(i, k2, param_grad, state_params)
+#         return (state_params, state_svrg)
+#
+#     return kernel
 
 
 
@@ -53,7 +58,7 @@ def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradi
     def sghmc_kernel(i, key, state):
         def body(state, key):
             k1, k2 = random.split(key)
-            g, _ = estimate_gradient(k1, get_params(state))
+            g, _ = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad), get_params)
             state = update(i, k2, g, state)
             return state, None
 
@@ -74,7 +79,7 @@ def _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum, estimate_
         i, key = x
         state_params, state_svrg = state
         k1, k2 = random.split(key)
-        g, state_svrg = estimate_gradient(k1, get_params(state_params), i, state_svrg)
+        g, state_svrg = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg), get_params)
         state_params = update(i, k2, g, state_params)
         return (state_params, state_svrg), None
 
@@ -97,7 +102,7 @@ def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
         state_params, param_grad = state
         k1, k2, k3 = random.split(key, 3)
         state_params = update1(i, k1, param_grad, state_params)
-        param_grad, _ = estimate_gradient(k2, get_params(state_params))
+        param_grad, _ = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg), get_params)
         state_params = update2(i, k3, param_grad, state_params)
         return (state_params, param_grad)
 
@@ -119,22 +124,28 @@ def build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering
     init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient)
     return init_fn, sgldCV_kernel, get_params
 
-
 def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update, get_params = sgld(dt)
-    estimate_gradient, state_SVRG = build_gradient_estimation_fn_SVRG(grad_log_post, data,
-                                                          batch_size, centering_value, update_rate)
-    sgld_kernel = _build_langevin_SVRG_kernel(update, get_params, estimate_gradient)
+    estimate_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate)
+    init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient)
+    return init_fn, sgldSVRG_kernel, get_params
 
-    def new_init_fn(key, params):
-        return (init_fn(params), state_SVRG)
 
-    def new_get_params(state):
-        state_params, _ = state
-        return get_params(state_params)
+# def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
+#     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+#     init_fn, update, get_params = sgld(dt)
+    # estimate_gradient, state_SVRG = build_gradient_estimation_fn_SVRG(grad_log_post, data,
+    #                                                       batch_size, centering_value, update_rate)
+    # sgld_kernel = _build_langevin_SVRG_kernel(update, get_params, estimate_gradient)
 
-    return new_init_fn, sgld_kernel, new_get_params
+#     def new_init_fn(key, params):
+#         return (init_fn(params), state_SVRG)
+#
+#     def new_get_params(state):
+#         state_params, _ = state
+#         return get_params(state_params)
+#
+#     return new_init_fn, sgld_kernel, new_get_params
 
 def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99, eps=1e-5):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
@@ -178,7 +189,7 @@ def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size,
                                 centering_value, update_rate, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
-    estimate_gradient, state_SVRG = build_gradient_estimation_fn_SVRG(grad_log_post, data,
+    estimate_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
                                                           batch_size, centering_value, update_rate)
     sghmc_kernel = _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum,
                             estimate_gradient, compiled_leapfrog=compiled_leapfrog)

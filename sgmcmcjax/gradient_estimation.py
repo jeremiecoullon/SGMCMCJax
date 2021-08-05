@@ -2,7 +2,7 @@ from typing import Any, Tuple, Callable
 from collections import namedtuple
 
 import jax.numpy as jnp
-from jax import random, jit, lax
+from jax import random, jit, lax, partial
 from jax.tree_util import tree_flatten, tree_unflatten, tree_map, tree_multimap
 from .types import PyTree, PRNGKey, SamplerState, SVRGState
 
@@ -14,8 +14,8 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
     # make sure data has jax arrays rather than numpy arrays
     data = tuple([jnp.array(elem) for elem in data])
 
-    @jit
     # def estimate_gradient(key, param):
+    @partial(jit, static_argnums=(3,))
     def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
        # TODO: make this signature the same for all gradient estimators, fix tests
        param = get_params_diffusion(state.diffusion_state)
@@ -39,8 +39,9 @@ def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_v
     flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
     update_fn = lambda c,g,gc: c + g - gc
 
-    @jit
+    # @jit
     # def estimate_gradient(key, param):
+    @partial(jit, static_argnums=(3,))
     def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
         param = get_params_diffusion(state.diffusion_state)
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
@@ -70,18 +71,30 @@ def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering
     def update_centering_value(svrg_state: SVRGState, param: PyTree) -> SVRGState:
         fb_grad_center = grad_log_post(param, *data)
         flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
-        svrg_state = SVRGState(param, svrg_state.update_rate, flat_fb_grad_center)
+        svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
         return svrg_state
 
-    @jit
+
     # def estimate_gradient(key, param, i, state):
-    def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
+    @partial(jit, static_argnums=(3,))
+    # def estimate_gradient(i: int, key: PRNGKey, state: SamplerState, get_params_diffusion: Callable) -> Tuple[PyTree, Any]:
+    def estimate_gradient(i, key, state, get_params_diffusion):
         param = get_params_diffusion(state.diffusion_state)
         svrg_state = state.svrg_state
-        svrg_state = lax.cond(i%svrg_state.update_rate == 0,
-                    lambda _: update_centering_value(svrg_state, param),
-                    lambda _ : svrg_state,
-                    None
+        # fb_grad_center = jnp.where(svrg_state.fb_grad_center is None, tree_flatten(param)[0], svrg_state.fb_grad_center) # BUG: svrg_state.fb_grad_center will be None by default
+        # svrg_state = lax.cond(i%update_rate == 0,
+        #             lambda _: update_centering_value(svrg_state, param),
+        #             # lambda _ : SVRGState(param, update_rate, fb_grad_center), # BUG: svrg_state.fb_grad_center will be None by default
+        #             lambda _ : svrg_state,
+        #             None
+        #         )
+        print(f"\n\n\nTYPE======= {update_centering_value(svrg_state, param)}\n\n\n{svrg_state}")
+        svrg_state = jnp.where(i%update_rate == 0,
+        # jnp.zeros(5), jnp.zeros(5)
+        update_centering_value(svrg_state, param),
+        svrg_state
+                    # update_centering_value(svrg_state, param),
+                    # svrg_state
                 )
 
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
@@ -95,5 +108,5 @@ def build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)
         return param_grad, svrg_state
 
-    state = update_centering_value(SVRGState(None, update_rate, None), centering_value)
-    return estimate_gradient, state
+    # state = update_centering_value(SVRGState(None, update_rate, None), centering_value)
+    return estimate_gradient#, state
