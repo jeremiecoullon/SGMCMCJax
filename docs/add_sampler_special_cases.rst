@@ -41,34 +41,23 @@ Our diffusion solver needs a different decorator and needs to include two update
           x, _ = state
           return x
 
-      return init_fn, update1, update2, get_params
+      return init_fn, (update1, update2), get_params
 
-Furthermore, the gradient will need to be carried along throughout sampling so that we can re-use it at the next iteration. The kernel factory will therefore need to include the gradient as part of state. We use a different helper function to build the kernel factory and we redefine `init_fn` and `get_params`::
-
+Once you have the diffusion you build the kernel factory in exactly the same was for sgld, namely::
 
   def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
       grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-      init_fn, update1, update2, get_params = badodab(dt, a)
-      estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-      badodab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
+      estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+      init_fn, baoab_kernel, get_params = _build_langevin_kernel(*badodab(dt, a), estimate_gradient, init_gradient)
+      return init_fn, baoab_kernel, get_params
 
-      def new_init_fn(params):
-          param_grads = grad_log_post(params, *data)
-          return (init_fn(params), param_grads)
-
-      def new_get_params(state):
-          state_params, _ = state
-          return get_params(state_params)
-
-      return new_init_fn, badodab_kernel, new_get_params
-
-As the kernel factory still returns the same things, the way to build the sampler factory is unchanged.
+The way to build the sampler factory is unchanged.
 
 
 Momentum resampling
 -------------------
 
-Samplers such as SGHMC resample momentum every `L` iterations (with `L` the number of leapfrog steps). Similarly to splitting schemes, the diffusion and kernel factory must therefore be written slightly differently.
+Samplers such as SGHMC resample momentum every `L` iterations (with `L` the number of leapfrog steps). The diffusion and kernel factory must therefore be written slightly differently.
 
 The diffusion function must now include a `resample_momentum` function::
 
@@ -98,13 +87,13 @@ The diffusion function must now include a `resample_momentum` function::
 
       return init_fn, update, get_params, resample_momentum
 
-The kernel factory now simply uses a different helper function (`_build_sghmc_kernel`) to build the kernel::
+The kernel factory is now slightly different to the previous cases: it simply uses a different helper function (`_build_sghmc_kernel`) to build the kernel::
 
-  def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01):
-      grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-      init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
-      estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-      sghmc_kernel = _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradient)
-      return init_fn, sghmc_kernel, get_params
+  def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(*sghmc(dt, alpha), estimate_gradient,
+                                                    init_gradient, L, compiled_leapfrog=compiled_leapfrog)
+    return init_fn, sghmc_kernel, get_params
 
 The sampler factory is then built in the usual way.

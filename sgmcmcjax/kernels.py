@@ -84,9 +84,9 @@ def build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering
     init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgldCV_kernel, get_params
 
-def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
+def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, update_rate):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, centering_value, update_rate)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data, batch_size, update_rate)
     init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgldSVRG_kernel, get_params
 
@@ -141,10 +141,10 @@ def build_sghmcCV_kernel(dt, L, loglikelihood, logprior, data, batch_size, cente
                                                     init_gradient, L, compiled_leapfrog=compiled_leapfrog)
     return init_fn, sghmc_kernel, get_params
 
-def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha=0.01, compiled_leapfrog=True):
+def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, update_rate, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
-                                                          batch_size, centering_value, update_rate)
+                                                          batch_size, update_rate)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(*sghmc(dt, alpha), estimate_gradient,
                                                     init_gradient, L, compiled_leapfrog=compiled_leapfrog)
     return init_fn, sghmc_kernel, get_params

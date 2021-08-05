@@ -19,10 +19,10 @@ def build_sampler_list(loglikelihood, logprior, param_IC):
     "Build a list of samplers with parameter param_IC"
     sgld_sampler = build_sgld_sampler(1e-5, loglikelihood, logprior, data, batch_size)
     sgldCV_sampler = build_sgldCV_sampler(1e-4, loglikelihood, logprior, data, batch_size, param_IC)
-    sgldSVRG_sampler = build_sgld_SVRG_sampler(1e-4, loglikelihood, logprior, data, batch_size, param_IC, 5)
+    sgldSVRG_sampler = build_sgld_SVRG_sampler(1e-4, loglikelihood, logprior, data, batch_size, 5)
     sghmc_sampler = build_sghmc_sampler(1e-6, 2, loglikelihood, logprior, data, batch_size)
     sghmcCV_sampler = build_sghmcCV_sampler(1e-6, 2, loglikelihood, logprior, data, batch_size, param_IC)
-    sghmcSVRG_sampler = build_sghmc_SVRG_sampler(1e-6, 2, loglikelihood, logprior, data, batch_size, param_IC, 5)
+    sghmcSVRG_sampler = build_sghmc_SVRG_sampler(1e-6, 2, loglikelihood, logprior, data, batch_size, 5)
     pSGLD_sampler = build_psgld_sampler(1e-2, loglikelihood, logprior, data, batch_size)
     baoab_sampler = build_baoab_sampler(1e-3, 5, loglikelihood, logprior, data, batch_size)
     sgnht_sampler = build_sgnht_sampler(1e-5, loglikelihood, logprior, data, batch_size)

@@ -64,7 +64,7 @@ def test_SVRG_estimator_shape():
     centering_value = params
     update_rate = 100
     estimate_gradient_SVRG, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
-                                                          batch_size, centering_value, update_rate)
+                                                          batch_size, update_rate)
     mygrad, svrg_state = init_gradient(random.PRNGKey(0), params)
     assert type(mygrad) == type(params)
     assert jnp.shape(mygrad) == jnp.shape(params)
@@ -75,6 +75,8 @@ def test_SVRG_estimator_shape():
     assert jnp.shape(mygrad) == jnp.shape(params)
     assert jnp.array_equal(svrg_state.centering_value, params)
 
+# ======
+# Check that having data as numpy arrays doesn't raise a `TracerArrayConversionError`"
 
 def test_standard_estimator_data_np_array():
     "Standard estimator: check that having data as numpy arrays doesn't raise a `TracerArrayConversionError`"
@@ -114,7 +116,7 @@ def test_SVRG_data_np_array():
     centering_value = params
     update_rate = 100
     estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
-                                                          batch_size, centering_value, update_rate)
+                                                          batch_size, update_rate)
     key = random.PRNGKey(0)
     mygrad, state_svrg = init_gradient(key, params)
     assert type(mygrad) == type(params)

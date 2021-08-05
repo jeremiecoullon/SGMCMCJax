@@ -36,14 +36,14 @@ Going down a level of abstraction: we can build the transition kernel for the sa
 
 By doing this we obtain 3 functions:
 
-- `init_fn`: this function takes in the initial parameter and returns a `state` object
+- `init_fn`: this function takes a PRNGKey and the initial parameter and returns a `state` object
 - `update`: takes in the iteration number, random key, gradient, and state. It returns the updated state
 - `get_params`: takes in a `state` object and returns the parameter
 
 
 We can now write the loop ourselves and update the state using the kernel function. Note that we must also split the random key, and save the samples ourselves::
 
-  state = init_fn(jnp.zeros(10))
+  state = init_fn(key, jnp.zeros(10))
   samples = []
 
   for i in range(Nsamples):

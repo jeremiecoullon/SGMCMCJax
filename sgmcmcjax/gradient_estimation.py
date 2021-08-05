@@ -57,22 +57,23 @@ def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_v
 
     return estimate_gradient, init_gradient
 
-def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data, batch_size, centering_value, update_rate: int):
+def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data, batch_size, update_rate: int):
     assert type(data) == tuple
     N_data, *_ = data[0].shape
     data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
     update_fn = lambda c,g,gc: c + g - gc
 
     def update_centering_value(param: PyTree) -> SVRGState:
+        # return init_gradient(random.key(0), params)[1]
         fb_grad_center = grad_log_post(param, *data)
         flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
-        svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
+        svrg_state = SVRGState(param, flat_fb_grad_center)
         return svrg_state
 
     def init_gradient(key: PRNGKey, param: PyTree) -> Tuple[PyTree, SVRGState]:
         fb_grad_center = grad_log_post(param, *data)
         flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
-        svrg_state = SVRGState(param, update_rate, flat_fb_grad_center)
+        svrg_state = SVRGState(param, flat_fb_grad_center)
         return fb_grad_center, svrg_state
 
     @jit

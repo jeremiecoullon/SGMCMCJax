@@ -20,12 +20,8 @@ register_pytree_node(
     lambda data, xs : DiffusionState(xs[0], data[0], data[1]))
 
 
-# SVRGState = namedtuple("SVRGState", ['centering_value', 'update_rate', 'fb_grad_center'],
-#                        defaults=(None, None, None))
-
 class SVRGState(NamedTuple):
     centering_value: Any = None
-    update_rate: Any = None
     fb_grad_center: Any = None
 
 

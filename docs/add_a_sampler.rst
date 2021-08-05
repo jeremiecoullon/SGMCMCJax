@@ -47,18 +47,17 @@ The kernel factory
 
 We then build the kernel factory. This function must return three functions that are similar to the ones in the previous section:
 
-- `init_fn`: creates the state of the sampler from some initial parameters.
+- `init_fn`: creates the state of the sampler from some initial parameters and PRNGKey.
 - `kernel`: takes in `i`, `key`,  and `state` and returns a new state.
 - `get_params`: takes in the state and returns the parameters
 
 You can find examples of these in `sgmcmcjax/kernels.py`::
 
   def build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size):
-      grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-      init_fn, update, get_params = sgld(dt)
-      estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-      sgld_kernel = _build_langevin_kernel(update, get_params, estimate_gradient)
-      return init_fn, sgld_kernel, get_params
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgld_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
+    return init_fn, sgld_kernel, get_params
 
 Note that we build the gradient of the log-posterior, the diffusion, and the gradient estimation functions. We then pass these in to a helper function that builds the kernel.
 
