@@ -1,4 +1,4 @@
-from typing import NamedTuple, Union, Any, Callable, Optional
+from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
 
 import jax.numpy as jnp
 from jax import jit, lax, random
@@ -10,7 +10,7 @@ from .types import PyTree, PRNGKey, SamplerState, SVRGState
 
 
 def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
-                    get_params_diffusion: Callable, estimate_gradient: Callable, init_gradient: Callable):
+                    get_params_diffusion: Callable, estimate_gradient: Callable, init_gradient: Callable) -> Tuple[Callable, Callable, Callable]:
     "build generic kernel"
 
     def init_fn(key: PRNGKey, params:PyTree):
@@ -22,12 +22,7 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
         diffusion_state, param_grad, svrg_state, grad_info = state
         k1, k2 = random.split(key)
         diffusion_state = update_diffusion(i, k1, param_grad, diffusion_state)
-        param_grad, svrg_state = estimate_gradient(
-                                                i,
-                                                k2,
-                                                get_params_diffusion(diffusion_state),
-                                                svrg_state
-                                            )
+        param_grad, svrg_state = estimate_gradient(i, k2, get_params_diffusion(diffusion_state), svrg_state)
         return SamplerState(diffusion_state, param_grad, svrg_state, grad_info)
 
     def get_params(state: SamplerState):
@@ -37,49 +32,29 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Callab
 
 
 
-
-
-def _build_sghmc_kernel(L, update, get_params, resample_momentum, estimate_gradient, compiled_leapfrog=True):
+def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable, get_params_diffusion: Callable, resample_momentum: Callable,
+                    estimate_gradient: Callable, init_gradient: Callable,
+                    L: int, compiled_leapfrog: bool = True) -> Tuple[Callable, Callable, Callable]:
     "Build generic sghmc kernel"
 
+    init_fn, langevin_kernel, get_params = _build_langevin_kernel(init_fn_diffusion, update_diffusion,
+                        get_params_diffusion, estimate_gradient, init_gradient)
+
     def sghmc_kernel(i, key, state):
+
         def body(state, key):
-            k1, k2 = random.split(key)
-            g, _ = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad), get_params)
-            state = update(i, k2, g, state)
-            return state, None
+            return langevin_kernel(i, key, state), None
 
         k1, k2 = random.split(key)
-        state = resample_momentum(i, k1, state)
+        diffusion_state = resample_momentum(i, k1, state.diffusion_state)
+        state = SamplerState(diffusion_state, state.param_grad, state.svrg_state, state.grad_info)
+
         keys = random.split(k2, L)
         state = run_loop(body, state, keys, compiled_leapfrog)
         return state
-    if compiled_leapfrog:
-        return jit(sghmc_kernel)
-    else:
-        return sghmc_kernel
 
+    return init_fn, sghmc_kernel, get_params
 
-def _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum, estimate_gradient, compiled_leapfrog=True):
-    "Build generic sghmc SVRG kernel"
-    def body(state, x):
-        i, key = x
-        state_params, state_svrg = state
-        k1, k2 = random.split(key)
-        g, state_svrg = estimate_gradient(i, k1, SamplerState(diffusion_state, param_grad, state_svrg), get_params)
-        state_params = update(i, k2, g, state_params)
-        return (state_params, state_svrg), None
-
-    def sghmc_kernel(i, key, state):
-        k1, k2 = random.split(key)
-        state_params, state_svrg = state
-        state_params = resample_momentum(i, k1, state_params)
-        keys = random.split(k2, L)
-        state = (state_params, state_svrg)
-        state = run_loop(body, state, (jnp.arange(L), keys), compiled_leapfrog)
-        return state
-
-    return sghmc_kernel
 
 def _build_palindrome_kernel(update1, update2, get_params, estimate_gradient):
     "build generic palindrome kernel"
@@ -118,22 +93,6 @@ def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, center
     return init_fn, sgldSVRG_kernel, get_params
 
 
-# def build_sgld_SVRG_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, update_rate):
-#     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-#     init_fn, update, get_params = sgld(dt)
-    # estimate_gradient, state_SVRG = build_gradient_estimation_fn_SVRG(grad_log_post, data,
-    #                                                       batch_size, centering_value, update_rate)
-    # sgld_kernel = _build_langevin_SVRG_kernel(update, get_params, estimate_gradient)
-
-#     def new_init_fn(key, params):
-#         return (init_fn(params), state_SVRG)
-#
-#     def new_get_params(state):
-#         state_params, _ = state
-#         return get_params(state_params)
-#
-#     return new_init_fn, sgld_kernel, new_get_params
-
 def build_psgld_kernel(dt, loglikelihood, logprior, data, batch_size, alpha=0.99, eps=1e-5):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
@@ -147,48 +106,35 @@ def build_sgldAdam_kernel(dt, loglikelihood, logprior, data, batch_size, beta1=0
     init_fn, sgldAdam_kernel, get_params = _build_langevin_kernel(*sgldAdam(dt, beta1, beta2, eps), estimate_gradient, init_gradient)
     return init_fn, sgldAdam_kernel, get_params
 
+
+def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
+    return init_fn, sgnht_kernel, get_params
+
+
 def build_sghmc_kernel(dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    sghmc_kernel = _build_sghmc_kernel(L, update, get_params, resample_momentum,
-                                    estimate_gradient, compiled_leapfrog=compiled_leapfrog)
-    def new_init_fn(key, params):
-        return init_fn(params)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(*sghmc(dt, alpha), estimate_gradient,
+                                                    init_gradient, L, compiled_leapfrog=compiled_leapfrog)
+    return init_fn, sghmc_kernel, get_params
 
-    return new_init_fn, sghmc_kernel, get_params
-
-def build_sghmcCV_kernel(dt, L, loglikelihood, logprior, data, batch_size,
-                            centering_value, alpha=0.01, compiled_leapfrog=True):
+def build_sghmcCV_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
-    estimate_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
-    sghmc_kernel = _build_sghmc_kernel(L, update, get_params, resample_momentum,
-                            estimate_gradient, compiled_leapfrog=compiled_leapfrog)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
+    init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(*sghmc(dt, alpha), estimate_gradient,
+                                                    init_gradient, L, compiled_leapfrog=compiled_leapfrog)
+    return init_fn, sghmc_kernel, get_params
 
-    def new_init_fn(key, params):
-        return init_fn(params)
-
-    return new_init_fn, sghmc_kernel, get_params
-
-
-def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size,
-                                centering_value, update_rate, alpha=0.01, compiled_leapfrog=True):
+def build_sghmc_SVRG_kernel(dt, L, loglikelihood, logprior, data, batch_size, centering_value, update_rate, alpha=0.01, compiled_leapfrog=True):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    init_fn, update, get_params, resample_momentum = sghmc(dt, alpha)
-    estimate_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(grad_log_post, data,
                                                           batch_size, centering_value, update_rate)
-    sghmc_kernel = _build_sghmc_SVRG_kernel(L, update, get_params, resample_momentum,
-                            estimate_gradient, compiled_leapfrog=compiled_leapfrog)
-
-    def new_init_fn(key, params):
-        return (init_fn(params), state_SVRG)
-
-    def new_get_params(state):
-        state_params, _ = state
-        return get_params(state_params)
-
-    return new_init_fn, sghmc_kernel, new_get_params
+    init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(*sghmc(dt, alpha), estimate_gradient,
+                                                    init_gradient, L, compiled_leapfrog=compiled_leapfrog)
+    return init_fn, sghmc_kernel, get_params
 
 
 def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
@@ -207,17 +153,11 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau
 
     return new_init_fn, baoab_kernel, new_get_params
 
-def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
-    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
-    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-    init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
-    return init_fn, sgnht_kernel, get_params
-
 
 def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     init_fn, update1, update2, get_params = badodab(dt, a)
-    estimate_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     badodab_kernel = _build_palindrome_kernel(update1, update2, get_params, estimate_gradient)
 
     def new_init_fn(key, params):

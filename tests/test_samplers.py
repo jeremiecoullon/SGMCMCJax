@@ -38,7 +38,7 @@ list_samplers_param_array = build_sampler_list(loglikelihood_array, logprior_arr
 list_samplers_param_list_array = build_sampler_list(loglikelihood_list_array, logprior_list_array, [jnp.zeros(D), jnp.zeros(D)])
 list_samplers =  list_samplers_param_list_array + list_samplers_param_array
 
-@pytest.mark.parametrize("sam_param", list_samplers[:7])
+@pytest.mark.parametrize("sam_param", list_samplers[:6])
 def test_all_samplers(sam_param):
     """
     Test all samplers for 2 parameter types:
