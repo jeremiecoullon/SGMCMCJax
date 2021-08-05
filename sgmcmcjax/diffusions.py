@@ -23,9 +23,9 @@ def diffusion_factory(is_palindrome=False, is_sghmc=False):
             if is_sghmc and (not is_palindrome):
                 init_fn, update, get_params, resample_momentum = sampler_maker(*args, **kwargs)
             elif (not is_sghmc) and is_palindrome:
-                init_fn, update, update2, get_params = sampler_maker(*args, **kwargs)
+                init_fn, (update, update2), get_params = sampler_maker(*args, **kwargs)
             elif is_sghmc and is_palindrome:
-                init_fn, update, update2, get_params, resample_momentum = sampler_maker(*args, **kwargs)
+                init_fn, (update, update2), get_params, resample_momentum = sampler_maker(*args, **kwargs)
             else:
                 init_fn, update, get_params = sampler_maker(*args, **kwargs)
 
@@ -98,9 +98,9 @@ def diffusion_factory(is_palindrome=False, is_sghmc=False):
             if is_sghmc and (not is_palindrome):
                 return tree_init, tree_update, tree_get_params, tree_resample_momentum
             elif (not is_sghmc) and is_palindrome:
-                return tree_init, tree_update, tree_update2, tree_get_params
+                return tree_init, (tree_update, tree_update2), tree_get_params
             elif is_sghmc and is_palindrome:
-                return tree_init, tree_update, tree_update2, tree_get_params, tree_resample_momentum
+                return tree_init, (tree_update, tree_update2), tree_get_params, tree_resample_momentum
             else:
                 return tree_init, tree_update, tree_get_params
         return tree_sampler_maker
@@ -249,7 +249,7 @@ def baoab(dt, gamma, tau=1):
         x, _ = state
         return x
 
-    return init_fn, update1, update2, get_params
+    return init_fn, (update1, update2), get_params
 
 @diffusion
 def sgnht(dt, a=0.01):
@@ -324,4 +324,4 @@ def badodab(dt, a=0.01):
         x, _, _ = state
         return x
 
-    return init_fn, update, update2, get_params
+    return init_fn, (update, update2), get_params
