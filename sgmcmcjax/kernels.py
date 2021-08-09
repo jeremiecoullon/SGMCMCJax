@@ -11,7 +11,12 @@ from .types import PyTree, PRNGKey, SamplerState, SVRGState, DiffusionState
 
 
 def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Union[Callable, Tuple[Callable, Callable]],
-                    get_params_diffusion: Callable, estimate_gradient: Callable, init_gradient: Callable) -> Tuple[Callable, Callable, Callable]:
+                    get_params_diffusion: Callable, estimate_gradient: Callable,
+                    init_gradient: Callable) -> Tuple[
+                                                    Callable[[PRNGKey, PyTree], SamplerState],
+                                                    Callable[[int, PRNGKey, SamplerState], SamplerState],
+                                                    Callable[[SamplerState], PyTree]
+                                                ]:
     "build generic kernel"
 
     # Check whether the diffusion is a palindrome (ie: splitting scheme)
@@ -21,7 +26,7 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Union[
     else:
         palindrome = False
 
-    def init_fn(key: PRNGKey, params:PyTree):
+    def init_fn(key: PRNGKey, params: PyTree):
         diffusion_state = init_fn_diffusion(params)
         param_grad, svrg_state = init_gradient(key, params)
         return SamplerState(diffusion_state, param_grad, svrg_state, None)
@@ -52,9 +57,9 @@ def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
     init_fn, langevin_kernel, get_params = _build_langevin_kernel(init_fn_diffusion, update_diffusion,
                         get_params_diffusion, estimate_gradient, init_gradient)
 
-    def sghmc_kernel(i, key, state):
+    def sghmc_kernel(i: int, key: PRNGKey, state: SamplerState) -> SamplerState:
 
-        def body(state, key):
+        def body(state: SamplerState, key: PRNGKey) -> Tuple[SamplerState, None]:
             return langevin_kernel(i, key, state), None
 
         k1, k2 = random.split(key)
