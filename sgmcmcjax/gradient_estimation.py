@@ -8,12 +8,12 @@ from .types import PyTree, PRNGKey, SamplerState, SVRGState
 
 
 # standard gradient estimator
-def build_gradient_estimation_fn(grad_log_post, data, batch_size):
+def build_gradient_estimation_fn(grad_log_post: Callable, data: Tuple, batch_size: int) -> Tuple[Callable, Callable]:
     assert type(data) == tuple
     N_data, *_ = data[0].shape
     data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
 
-    def init_gradient(key: PRNGKey, param: PyTree):
+    def init_gradient(key: PRNGKey, param: PyTree) -> Tuple[PyTree, SVRGState]:
         idx_batch = random.choice(key=key, a=jnp.arange(N_data), shape=(batch_size,))
         minibatch_data = tuple([elem[idx_batch] for elem in data])
         param_grad = grad_log_post(param, *minibatch_data)
@@ -30,7 +30,7 @@ def build_gradient_estimation_fn(grad_log_post, data, batch_size):
     return estimate_gradient, init_gradient
 
 # Control variates
-def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value):
+def build_gradient_estimation_fn_CV(grad_log_post: Callable, data: Tuple, batch_size: int, centering_value: PyTree) -> Tuple[Callable, Callable]:
     assert type(data) == tuple
     N_data, *_ = data[0].shape
     data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
@@ -57,14 +57,13 @@ def build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_v
 
     return estimate_gradient, init_gradient
 
-def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data, batch_size, update_rate: int):
+def build_gradient_estimation_fn_SVRG(grad_log_post: Callable, data: Tuple, batch_size: int, update_rate: int) -> Tuple[Callable, Callable]:
     assert type(data) == tuple
     N_data, *_ = data[0].shape
     data = tuple([jnp.array(elem) for elem in data]) # this makes sure data has jax arrays rather than numpy arrays
     update_fn = lambda c,g,gc: c + g - gc
 
     def update_centering_value(param: PyTree) -> SVRGState:
-        # return init_gradient(random.key(0), params)[1]
         fb_grad_center = grad_log_post(param, *data)
         flat_fb_grad_center, tree_fb_grad_center = tree_flatten(fb_grad_center)
         svrg_state = SVRGState(param, flat_fb_grad_center)

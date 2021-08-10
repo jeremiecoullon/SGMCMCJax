@@ -1,3 +1,5 @@
+from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
+
 import jax.numpy as jnp
 from jax import lax, jit, partial, random
 from tqdm.auto import tqdm
@@ -7,12 +9,15 @@ from .kernels import build_sgld_kernel, build_psgld_kernel, build_sgldCV_kernel,
 from .kernels import build_sghmc_kernel, build_sghmcCV_kernel, build_sghmc_SVRG_kernel, build_baoab_kernel
 from .kernels import build_sgnht_kernel, build_badodab_kernel
 from .util import progress_bar_scan
+from .types import PyTree, PRNGKey, SamplerState, SVRGState, DiffusionState
 
 """
 Samplers: sgld, sgld_CV, sgld_SVRG, psgld, sghmc, sghmc_CV, sghmc_SVRG
 """
 
-def _build_compiled_sampler(init_fn, my_kernel, get_params):
+def _build_compiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
+                            my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
+                            get_params: Callable[[SamplerState], PyTree]) -> Callable:
     "Build generic compiled sampler"
     @partial(jit, static_argnums=(1,))
     def sampler(key, Nsamples, params):
@@ -30,7 +35,9 @@ def _build_compiled_sampler(init_fn, my_kernel, get_params):
         return samples
     return sampler
 
-def _build_noncompiled_sampler(init_fn, my_kernel, get_params):
+def _build_noncompiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
+                            my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
+                            get_params: Callable[[SamplerState], PyTree]) -> Callable:
     "Build generic non-compiled sampler"
     def sampler(key, Nsamples, params):
         samples = []

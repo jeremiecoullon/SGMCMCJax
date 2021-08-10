@@ -10,7 +10,7 @@ from .types import PyTree, PRNGKey, SamplerState, SVRGState, DiffusionState
 
 
 
-def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Union[Callable, Tuple[Callable, Callable]],
+def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Any,
                     get_params_diffusion: Callable, estimate_gradient: Callable,
                     init_gradient: Callable) -> Tuple[
                                                     Callable[[PRNGKey, PyTree], SamplerState],
@@ -51,7 +51,11 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Union[
 
 def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable, get_params_diffusion: Callable, resample_momentum: Callable,
                     estimate_gradient: Callable, init_gradient: Callable,
-                    L: int, compiled_leapfrog: bool = True) -> Tuple[Callable, Callable, Callable]:
+                    L: int, compiled_leapfrog: bool = True) -> Tuple[
+                                                    Callable[[PRNGKey, PyTree], SamplerState],
+                                                    Callable[[int, PRNGKey, SamplerState], SamplerState],
+                                                    Callable[[SamplerState], PyTree]
+                                                ]:
     "Build generic sghmc kernel"
 
     init_fn, langevin_kernel, get_params = _build_langevin_kernel(init_fn_diffusion, update_diffusion,
