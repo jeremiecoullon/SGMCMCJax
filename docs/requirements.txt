@@ -1,0 +1,6 @@
+furo==2020.12.30b24
+Jinja2==2.11
+nbsphinx==0.8.6
+nb-black==1.0.7
+matplotlib==3.3.3
+sphinx-copybutton==0.3.1
