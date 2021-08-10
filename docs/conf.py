@@ -23,7 +23,7 @@ copyright = '2021, Jeremie Coullon'
 author = 'Jeremie Coullon'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0'
+release = '0.2.1'
 
 
 # -- General configuration ---------------------------------------------------
