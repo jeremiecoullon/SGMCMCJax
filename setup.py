@@ -22,7 +22,7 @@ EXTRAS = {
 
 setup(
     name='SGMCMCJax',
-    version='0.2.1',
+    version='0.2.2',
     author='Jeremie Coullon',
     author_email='jeremie.coullon@gmail.com',
     packages=find_packages(".", exclude=["tests"]),
