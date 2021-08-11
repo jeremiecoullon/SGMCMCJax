@@ -63,7 +63,7 @@ def sgmcmc_sampler(build_sampler_fn):
         if compiled:
             return _build_compiled_sampler(init_fn, my_kernel, get_params)
         else:
-            return _build_noncompiled_sampler(init_fn, my_kernel, get_params)
+            return _build_noncompiled_sampler(init_fn, jit(my_kernel), get_params)
 
     return wrapper
 
