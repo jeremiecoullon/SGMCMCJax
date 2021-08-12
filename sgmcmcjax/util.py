@@ -1,9 +1,11 @@
+from typing import Tuple, Callable
+
 import jax.numpy as jnp
-from jax import grad, jit, vmap, lax
+from jax import grad, jit, vmap, lax, value_and_grad
 from jax.experimental import host_callback
 from tqdm.auto import tqdm
 
-def build_grad_log_post(loglikelihood, logprior, data):
+def build_grad_log_post(loglikelihood: Callable, logprior: Callable, data: Tuple, with_val: bool = False) -> Callable:
     if len(data)==1:
         batch_loglik = jit(vmap(loglikelihood, in_axes=(None, 0)))
     elif len(data)==2:
@@ -15,7 +17,10 @@ def build_grad_log_post(loglikelihood, logprior, data):
     def log_post(param, *args):
         return logprior(param) + Ndata*jnp.mean(batch_loglik(param, *args), axis=0)
 
-    grad_log_post = jit(grad(log_post))
+    if with_val:
+        grad_log_post = jit(value_and_grad(log_post))
+    else:
+        grad_log_post = jit(grad(log_post))
     return grad_log_post
 
 def run_loop(f, state, xs, compiled=True):
