@@ -56,7 +56,9 @@ The current list of samplers is:
 - SGLDAdam
 - BAOAB
 - SGNHT
+- SGNHT-CV
 - BADODAB
+- BADODAB-CV
 
 
 ## Installation

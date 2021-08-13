@@ -115,6 +115,12 @@ def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
     return init_fn, sgnht_kernel, get_params
 
+def build_sgnhtCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, a=0.01):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
+    init_fn, sgnht_kernel, get_params = _build_langevin_kernel(*sgnht(dt, a), estimate_gradient, init_gradient)
+    return init_fn, sgnht_kernel, get_params
+
 def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
@@ -124,6 +130,12 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau
 def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
+    init_fn, baoab_kernel, get_params = _build_langevin_kernel(*badodab(dt, a), estimate_gradient, init_gradient)
+    return init_fn, baoab_kernel, get_params
+
+def build_badodabCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value, a=0.01):
+    grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
+    estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(*badodab(dt, a), estimate_gradient, init_gradient)
     return init_fn, baoab_kernel, get_params
 

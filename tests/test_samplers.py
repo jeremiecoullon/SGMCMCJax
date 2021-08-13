@@ -7,6 +7,7 @@ from sgmcmcjax.samplers import build_sgld_sampler
 from sgmcmcjax.samplers import build_sgldCV_sampler, build_sgld_SVRG_sampler, build_psgld_sampler
 from sgmcmcjax.samplers import build_sghmc_sampler, build_sghmcCV_sampler, build_sghmc_SVRG_sampler
 from sgmcmcjax.samplers import build_baoab_sampler, build_sgnht_sampler, build_badodab_sampler
+from sgmcmcjax.samplers import build_sgnhtCV_sampler, build_badodabCV_sampler
 
 # import model and dataset with 2 different parameter shapes
 from models import X_data, loglikelihood_array, logprior_array, loglikelihood_list_array, logprior_list_array
@@ -26,10 +27,13 @@ def build_sampler_list(loglikelihood, logprior, param_IC):
     pSGLD_sampler = build_psgld_sampler(1e-2, loglikelihood, logprior, data, batch_size)
     baoab_sampler = build_baoab_sampler(1e-3, 5, loglikelihood, logprior, data, batch_size)
     sgnht_sampler = build_sgnht_sampler(1e-5, loglikelihood, logprior, data, batch_size)
+    sgnhtCV_sampler = build_sgnhtCV_sampler(1e-5, loglikelihood, logprior, data, batch_size, param_IC)
     badodab_sampler = build_badodab_sampler(1e-3, loglikelihood, logprior, data, batch_size)
+    badodabCV_sampler = build_badodabCV_sampler(1e-3, loglikelihood, logprior, data, batch_size, param_IC)
 
     list_samplers = [sgld_sampler, sgldCV_sampler, sgldSVRG_sampler, sghmc_sampler, sghmcCV_sampler,
-        sghmcSVRG_sampler, pSGLD_sampler, baoab_sampler, sgnht_sampler, badodab_sampler
+        sghmcSVRG_sampler, pSGLD_sampler, baoab_sampler, sgnht_sampler, sgnhtCV_sampler,
+        badodab_sampler, badodabCV_sampler
     ]
     return [(sam, param_IC) for sam in list_samplers]
 
