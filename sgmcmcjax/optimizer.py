@@ -1,7 +1,7 @@
 from typing import Tuple, Callable
 from jax.tree_util import tree_map
 from jax.experimental.optimizers import adam
-from jax import partial, jit, lax, random
+from jax import jit, lax, random
 import jax.numpy as jnp
 
 from .gradient_estimation import build_gradient_estimation_fn

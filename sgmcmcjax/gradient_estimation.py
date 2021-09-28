@@ -2,7 +2,7 @@ from typing import Any, Tuple, Callable
 from collections import namedtuple
 
 import jax.numpy as jnp
-from jax import random, jit, lax, partial
+from jax import random, jit, lax
 from jax.tree_util import tree_flatten, tree_unflatten, tree_map, tree_multimap
 from .types import PyTree, PRNGKey, SamplerState, SVRGState
 

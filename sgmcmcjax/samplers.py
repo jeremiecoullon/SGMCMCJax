@@ -1,7 +1,7 @@
 from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
-
+from functools import partial
 import jax.numpy as jnp
-from jax import lax, jit, partial, random
+from jax import lax, jit, random
 from tqdm.auto import tqdm
 import functools
 

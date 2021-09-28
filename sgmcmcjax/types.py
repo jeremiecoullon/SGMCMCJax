@@ -17,7 +17,7 @@ DiffusionState = namedtuple("DiffusionState", ['packed_state', 'tree_def', 'subt
 register_pytree_node(
     DiffusionState,
     lambda xs: ((xs.packed_state,), (xs.tree_def, xs.subtree_defs)),
-    lambda data, xs : DiffusionState(xs[0], data[0], data[1]))
+    lambda data, xs : DiffusionState(xs[0], data[0], data[1])) # type: ignore[index]
 
 
 class SVRGState(NamedTuple):

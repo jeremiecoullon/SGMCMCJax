@@ -1,5 +1,6 @@
 import functools
-from jax import random, partial
+from functools import partial
+from jax import random
 from jax.tree_util import tree_flatten, tree_unflatten
 from jax._src.util import safe_map, unzip2
 from .types import DiffusionState
