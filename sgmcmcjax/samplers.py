@@ -17,12 +17,12 @@ Samplers: sgld, sgld_CV, sgld_SVRG, psgld, sghmc, sghmc_CV, sghmc_SVRG
 
 def _build_compiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
                             my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
-                            get_params: Callable[[SamplerState], PyTree]) -> Callable:
+                            get_params: Callable[[SamplerState], PyTree],
+                            pbar: bool = True) -> Callable:
     "Build generic compiled sampler"
     @partial(jit, static_argnums=(1,))
     def sampler(key, Nsamples, params):
 
-        @progress_bar_scan(Nsamples)
         def body(carry, i):
             key, state = carry
             key, subkey = random.split(key)
@@ -31,20 +31,25 @@ def _build_compiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
 
         key, subkey = random.split(key)
         state = init_fn(subkey, params)
-        (_, _), samples = lax.scan(body, (key, state), jnp.arange(Nsamples))
+
+        lebody = progress_bar_scan(Nsamples)(body) if pbar else body
+        (_, _), samples = lax.scan(lebody, (key, state), jnp.arange(Nsamples))
         return samples
     return sampler
 
 def _build_noncompiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
                             my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
-                            get_params: Callable[[SamplerState], PyTree]) -> Callable:
+                            get_params: Callable[[SamplerState], PyTree],
+                            pbar: bool = True) -> Callable:
     "Build generic non-compiled sampler"
     def sampler(key, Nsamples, params):
         samples = []
         key, subkey = random.split(key)
         state = init_fn(subkey, params)
 
-        for i in tqdm(range(Nsamples)):
+        _tqdm = tqdm(range(Nsamples)) if pbar else range(Nsamples)
+
+        for i in _tqdm:
             key, subkey = random.split(key)
             state = my_kernel(i, subkey, state)
             samples.append(get_params(state))
@@ -59,11 +64,12 @@ def sgmcmc_sampler(build_sampler_fn):
     @functools.wraps(build_sampler_fn)
     def wrapper(*args, **kwargs):
         compiled = kwargs.pop('compiled', True)
+        pbar = kwargs.pop('pbar', True)
         init_fn, my_kernel, get_params = build_sampler_fn(*args, **kwargs)
         if compiled:
-            return _build_compiled_sampler(init_fn, my_kernel, get_params)
+            return _build_compiled_sampler(init_fn, my_kernel, get_params, pbar=pbar)
         else:
-            return _build_noncompiled_sampler(init_fn, jit(my_kernel), get_params)
+            return _build_noncompiled_sampler(init_fn, jit(my_kernel), get_params, pbar=pbar)
 
     return wrapper
 
