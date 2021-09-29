@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import tensorflow_datasets as tfds
-from .util import one_hot
+
 """
 # Bayesian NN
 
@@ -20,6 +20,9 @@ mnist_data, info = tfds.load(name="mnist", batch_size=-1, with_info=True, as_sup
 mnist_data = tfds.as_numpy(mnist_data)
 data_train, data_test = mnist_data['train'], mnist_data['test']
 
+def one_hot(x, k, dtype=jnp.float32):
+    "Create a one-hot encoding of x of size k."
+    return jnp.array(x[:, None] == jnp.arange(k), dtype)
 
 y_train = one_hot(data_train[1], 10)
 y_test = one_hot(data_test[1], 10)

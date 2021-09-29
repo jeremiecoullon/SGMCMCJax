@@ -1,11 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from jax import jit, vmap
-from jax import nn, random
-from jax import scipy
-
-from .util import flatten_NN_params
-
+from jax import jit, vmap, nn, random, scipy
 
 
 """
