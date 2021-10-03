@@ -1,10 +1,9 @@
 
-# MAP estimate for multivariate Diagonal Gaussian 
+# MAP estimate for multivariate Diagonal Gaussian
 
 import jax.numpy as jnp
 from jax import random
-from sgmcmcjax.optimizer import build_adam_optimizer
-#from . sgmcmc.optimizer import build_adam_optimizer, build_optax_optimizer
+from sgmcmcjax.optimizer import build_adam_optimizer, build_optax_optimizer
 import optax
 
 def loglikelihood(theta, x):
@@ -22,8 +21,9 @@ X_data = random.normal(key, shape=(N, D)) + mu_true
 # Adam
 batch_size = int(0.1*N)
 dt = 1e-2
-#optimizer = optimizer.build_adam_optimizer(dt, loglikelihood, logprior, (X_data,), batch_size)
-optimizer = build_adam_optimizer(dt, loglikelihood, logprior, (X_data,), batch_size)
+opt = optax.adam(learning_rate=dt)
+optimizer = build_optax_optimizer(opt, loglikelihood, logprior, (X_data,), batch_size)
+# optimizer = build_adam_optimizer(dt, loglikelihood, logprior, (X_data,), batch_size)
 
 Nsamples = 10_000
 params, log_post_list = optimizer(key, Nsamples, jnp.zeros(D))
@@ -31,5 +31,3 @@ print(log_post_list.shape)
 print(params.shape)
 assert jnp.allclose(params, mu_true, atol=1e-1)
 print('test passed')
-
-
