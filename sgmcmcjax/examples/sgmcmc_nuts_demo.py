@@ -14,7 +14,7 @@ import optax
 
 from blackjax import nuts, stan_warmup
 from sgmcmcjax.samplers import build_sgld_sampler
-from sgmcmc_utils import build_nuts_sampler
+from .sgmcmc_utils import build_nuts_sampler
 from sgmcmcjax.optimizer import build_optax_optimizer
 
 # We use the 'quickstart' example from
