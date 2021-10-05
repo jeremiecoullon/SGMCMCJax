@@ -13,30 +13,6 @@ import optax
 from sgmcmcjax.util import build_grad_log_post, progress_bar_scan
 from sgmcmcjax.gradient_estimation import build_gradient_estimation_fn
 
-# Extends https://github.com/jeremiecoullon/SGMCMCJax/blob/master/sgmcmcjax/optimizer.py
-def build_optax_optimizer(optimizer, loglikelihood, logprior, data, batch_size, pbar: bool = True):
-    grad_log_post = build_grad_log_post(loglikelihood, logprior, data, with_val=True)
-    estimate_gradient, _ = build_gradient_estimation_fn(grad_log_post, data, batch_size)
-
-    @jit
-    def body(carry, i):
-        key, state, params = carry
-        key, subkey = random.split(key)
-        (lp_val, param_grad), _ = estimate_gradient(i, subkey, params)
-        neg_param_grad = tree_map(lambda x: -x, param_grad)
-        updates, state = optimizer.update(neg_param_grad, state)
-        params = optax.apply_updates(params, updates)
-        return (key, state, params), lp_val
-
-    def run_optimizer(key, Niters, params):
-        state = optimizer.init(params)
-        lebody = progress_bar_scan(Niters)(body) if pbar else body
-        (key, state, params), logpost_array = lax.scan(lebody, (key, state, params), jnp.arange(Niters))
-        return params, logpost_array
-
-    return run_optimizer
-
-
 # Extends https://github.com/jeremiecoullon/SGMCMCJax/blob/master/sgmcmcjax/samplers.py
 # by making a wrapper for blackjax.nuts (https://github.com/blackjax-devs/blackjax),
 # so it acts like other sgmcmc samplers (ie takes loglikelihood and logprior, instead of potential)
@@ -49,7 +25,6 @@ def inference_loop(rng_key, kernel, initial_state, num_samples, pbar):
         return (state, key), state
 
     lebody = progress_bar_scan(num_samples)(one_step) if pbar else one_step
-    #_, states = lax.scan(one_step, (initial_state, rng_key), jnp.arange(num_samples))
     _, states = lax.scan(lebody, (initial_state, rng_key), jnp.arange(num_samples))
     return states
 
