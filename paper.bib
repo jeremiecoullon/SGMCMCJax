@@ -26,11 +26,23 @@
   year = {2018},
 }
 
-@article{baker2017sgmcmc,
-  title={sgmcmc: An R package for stochastic gradient Markov chain Monte Carlo},
-  author={Baker, Jack and Fearnhead, Paul and Fox, Emily B and Nemeth, Christopher},
-  journal={arXiv preprint arXiv:1710.00578},
-  year={2017}
+@article{baker2019sgmcmc,
+title = "sgmcmc: An R Package for Stochastic Gradient Markov Chain Monte Carlo",
+abstract = "This paper introduces the R package sgmcmc; which can be used for Bayesian inference on problems with large datasets using stochastic gradient Markov chain Monte Carlo (SGMCMC). Traditional Markov chain Monte Carlo (MCMC) methods, such as Metropolis-Hastings, are known to run prohibitively slowly as the dataset size increases. SGMCMC solves this issue by only using a subset of data at each iteration. SGMCMC requires calculating gradients of the log likelihood and log priors, which can be time consuming and error prone to perform by hand. The sgmcmc package calculates these gradients itself using automatic differentiation, making the implementation of these methods much easier. To do this, the package uses the software library TensorFlow, which has a variety of statistical distributions and mathematical operations as standard, meaning a wide class of models can be built using this framework. SGMCMC has become widely adopted in the machine learning literature, but less so in the statistics community. We believe this may be partly due to lack of software; this package aims to bridge this gap.",
+keywords = "stat.CO, stat.AP, stat.ML",
+author = "Jack Baker and Paul Fearnhead and Fox, {Emily B.} and Nemeth, {Christopher John}",
+year = "2019",
+month = oct,
+day = "31",
+doi = "10.18637/jss.v091.i03",
+language = "English",
+volume = "91",
+pages = "1--27",
+journal = "Journal of Statistical Software",
+issn = "1548-7660",
+publisher = "University of California at Los Angeles",
+number = "3",
+
 }
 
 @misc{tensorflow2015-whitepaper,
@@ -118,4 +130,3 @@ isbn = {0262018020},
 publisher = {The MIT Press},
 abstract = {Today's Web-enabled deluge of electronic data calls for automated methods of data analysis. Machine learning provides these, developing methods that can automatically detect patterns in data and then use the uncovered patterns to predict future data. This textbook offers a comprehensive and self-contained introduction to the field of machine learning, based on a unified, probabilistic approach. The coverage combines breadth and depth, offering necessary background material on such topics as probability, optimization, and linear algebra as well as discussion of recent developments in the field, including conditional random fields, L1 regularization, and deep learning. The book is written in an informal, accessible style, complete with pseudo-code for the most important algorithms. All topics are copiously illustrated with color images and worked examples drawn from such application domains as biology, text processing, computer vision, and robotics. Rather than providing a cookbook of different heuristic methods, the book stresses a principled model-based approach, often using the language of graphical models to specify models in a concise and intuitive way. Almost all the models described have been implemented in a MATLAB software package--PMTK (probabilistic modeling toolkit)--that is freely available online. The book is suitable for upper-level undergraduates with an introductory-level college math background and beginning graduate students. }
 }
-
