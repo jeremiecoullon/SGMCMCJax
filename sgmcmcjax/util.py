@@ -1,35 +1,47 @@
-from typing import Any, Callable, Tuple, Iterable, Union
+from typing import Any, Callable, Iterable, Tuple, Union
 
 import jax.numpy as jnp
-from jax import grad, jit, vmap, lax, value_and_grad
+from jax import grad, jit, lax, value_and_grad, vmap
 from jax.experimental import host_callback
 from tqdm.auto import tqdm
 
-def build_grad_log_post(loglikelihood: Callable, logprior: Callable, data: Tuple, with_val: bool = False) -> Callable:
-    """Build the gradient of the log-posterior
+
+def build_grad_log_post(
+    loglikelihood: Callable, logprior: Callable, data: Tuple, with_val: bool = False
+) -> Callable:
+    """Build the gradient of the log-posterior.
+    The returned function has signature:
+
+    grad_lost_post (Callable)
+        Args:
+            param (Pytree): parameters to evaluate the log-posterior at
+            args: data (either minibatch or fullbatch) to pass in to the log-likelihood
+        Returns:
+            gradient of the log-posterior (PyTree), and optionally the value of the log-posterior (float)
 
     Args:
-        loglikelihood (Callable): [description]
-        logprior (Callable): [description]
-        data (Tuple): [description]
-        with_val (bool, optional): [description]. Defaults to False.
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        with_val (bool, optional): Whether or not the returned function also inclues the value of the log-posterior as well as the value of the gradient. Defaults to False.
 
     Raises:
-        ValueError: [description]
+        ValueError: the 'data' argument should either be a tuple of size 1 or 2
 
     Returns:
-        Callable: [description]
+        Callable: The gradient of the log-posterior
     """
-    if len(data)==1:
+    if len(data) == 1:
         batch_loglik = jit(vmap(loglikelihood, in_axes=(None, 0)))
-    elif len(data)==2:
-        batch_loglik = jit(vmap(loglikelihood, in_axes=(None, 0,0)))
+    elif len(data) == 2:
+        batch_loglik = jit(vmap(loglikelihood, in_axes=(None, 0, 0)))
     else:
-        raise ValueError("Data must be a tuple of size 1 or 2")
+        raise ValueError("'data' must be a tuple of size 1 or 2")
 
     Ndata = data[0].shape[0]
+
     def log_post(param, *args):
-        return logprior(param) + Ndata*jnp.mean(batch_loglik(param, *args), axis=0)
+        return logprior(param) + Ndata * jnp.mean(batch_loglik(param, *args), axis=0)
 
     if with_val:
         grad_log_post = jit(value_and_grad(log_post))
@@ -37,19 +49,20 @@ def build_grad_log_post(loglikelihood: Callable, logprior: Callable, data: Tuple
         grad_log_post = jit(grad(log_post))
     return grad_log_post
 
-def run_loop(f: Callable, state: Any, xs: Iterable, compiled: bool=True) -> Any:
+
+def run_loop(f: Callable, state: Any, xs: Iterable, compiled: bool = True) -> Any:
     """Loop over an iterable and keep only the final state
     the function `f` should return `(state, None)`
     compiled: whether or not to run lax.scan or a Python loop
 
     Args:
-        f (Callable): [description]
-        state (Any): [description]
-        xs (iter): [description]
-        compiled (Bool, optional): [description]. Defaults to True.
+        f (Callable): function to apply at every iteration
+        state (Any): state of the system
+        xs (iter): Iteratable to loop over
+        compiled (Bool, optional): whether or not the loop is performed with lax.scan or not. Otherwise run a native Python loop. Defaults to True.
 
     Returns:
-        Any: [description]
+        Any: final state of the system
     """
     if compiled:
         state, _ = lax.scan(f, state, xs)
@@ -60,19 +73,20 @@ def run_loop(f: Callable, state: Any, xs: Iterable, compiled: bool=True) -> Any:
         return state
 
 
-def progress_bar_scan(num_samples:int , message: Union[None, str] = None) -> Callable:
-    """Decorator to build a progress bar 
+def progress_bar_scan(num_samples: int, message: Union[None, str] = None) -> Callable:
+    """Decorator factory to build a tqdm progress bar using lax.scan.
+    This returns a decorator to apply to the 'body' function used in lax.scan
 
     Args:
-        num_samples (int): [description]
-        message (Union[None, str]): [description]
+        num_samples (int): number of samples to run lax.scan
+        message (Union[None, str]): message to display in the progress bar. Defaults to f'Running for {num_samples:,} iterations'
 
     Returns:
-        Callable: [description]
+        Callable: decorator to apply to the body body
     """
-    
+
     if message is None:
-            message = f"Running for {num_samples:,} iterations"
+        message = f"Running for {num_samples:,} iterations"
     tqdm_bars = {}
 
     def _define_tqdm(arg, transform):
@@ -102,7 +116,7 @@ def progress_bar_scan(num_samples:int , message: Union[None, str] = None) -> Cal
         )
 
         _ = lax.cond(
-            iter_num == num_samples-1,
+            iter_num == num_samples - 1,
             lambda _: host_callback.id_tap(_close_tqdm, print_rate, result=iter_num),
             lambda _: iter_num,
             operand=None,

@@ -1,6 +1,8 @@
 Diffusions 
 ==========
 
+.. automodule:: sgmcmcjax.diffusions
+   :members:
 
-.. automodule:: sgmcmcjax.kernels
+.. automodule:: sgmcmcjax.diffusion_util
    :members:

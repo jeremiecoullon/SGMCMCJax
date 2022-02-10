@@ -1,7 +1,6 @@
-import numpy as np
 import jax.numpy as jnp
-from jax import jit, vmap, nn, random, scipy
-
+import numpy as np
+from jax import jit, nn, random, scipy, vmap
 
 """
 # Bayesian NN
@@ -10,6 +9,7 @@ Same setup as in https://arxiv.org/pdf/1907.06986.pdf
 """
 
 from .NN_data import X_train
+
 N_data = X_train.shape[0]
 
 # ==========
@@ -17,12 +17,13 @@ N_data = X_train.shape[0]
 # initialise params: list of tuples (W, b) for each layer
 def random_layer(key, m, n, scale=1e-2):
     key, subkey = random.split(key)
-    return (scale*random.normal(key, (n,m))), scale*random.normal(subkey, (n,))
+    return (scale * random.normal(key, (n, m))), scale * random.normal(subkey, (n,))
 
 
 def init_network(key, sizes):
     keys = random.split(key, len(sizes))
-    return [random_layer(k,m,n) for k,m,n in zip(keys, sizes[:-1], sizes[1:])]
+    return [random_layer(k, m, n) for k, m, n in zip(keys, sizes[:-1], sizes[1:])]
+
 
 # ===========
 # predict and accuracy functions
@@ -38,12 +39,15 @@ def predict(params, x):
     logits = jnp.dot(final_w, activations) + final_b
     return nn.log_softmax(logits)
 
+
 # =================
 # Log-posterior
 
+
 @jit
 def loglikelihood(params, X, y):
-    return jnp.sum(y*predict(params, X))
+    return jnp.sum(y * predict(params, X))
+
 
 def logprior(params):
     logP = 0.0
@@ -55,6 +59,7 @@ def logprior(params):
 
 # Accuracy for a single sample
 batch_predict = vmap(predict, in_axes=(None, 0))
+
 
 @jit
 def accuracy(params, X, y):
