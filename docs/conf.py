@@ -18,12 +18,12 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SGMCMCJax'
-copyright = '2021, Jeremie Coullon'
-author = 'Jeremie Coullon'
+project = "SGMCMCJax"
+copyright = "2021, Jeremie Coullon"
+author = "Jeremie Coullon"
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.9'
+release = "0.2.9"
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,16 +33,17 @@ release = '0.2.9'
 # ones.
 extensions = [
     "nbsphinx",
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.autosectionlabel',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.autodoc",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

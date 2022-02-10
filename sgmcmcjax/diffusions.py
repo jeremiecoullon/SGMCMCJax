@@ -6,7 +6,15 @@ from .diffusion_util import diffusion, diffusion_sghmc, diffusion_palindrome
 
 @diffusion
 def sgld(dt):
-    "https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf"
+    """SGLD diffusion 
+    https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
+
+    Args:
+        dt ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     dt = make_schedule(dt)
 
     def init_fn(x):
@@ -22,7 +30,17 @@ def sgld(dt):
 
 @diffusion
 def psgld(dt, alpha=0.99, eps=1e-5):
-    "https://arxiv.org/pdf/1512.07666.pdf"
+    """Preconditioned SGLD diffusion 
+    See paper: https://arxiv.org/pdf/1512.07666.pdf
+
+    Args:
+        dt ([type]): [description]
+        alpha (float, optional): [description]. Defaults to 0.99.
+        eps ([type], optional): [description]. Defaults to 1e-5.
+
+    Returns:
+        [type]: [description]
+    """
     dt = make_schedule(dt)
 
     def init_fn(x):

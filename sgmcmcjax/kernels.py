@@ -1,4 +1,4 @@
-from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
+from typing import NamedTuple, Any, Callable, Optional, Tuple
 
 import jax.numpy as jnp
 from jax import jit, lax, random
@@ -17,7 +17,15 @@ def _build_langevin_kernel(init_fn_diffusion: Callable, update_diffusion: Any,
                                                     Callable[[int, PRNGKey, SamplerState], SamplerState],
                                                     Callable[[SamplerState], PyTree]
                                                 ]:
-    "build generic kernel"
+    """Build a general Langevin kernel
+
+    :param init_fn_diffusion: init function for the diffusion
+    :param update_diffusion: update function for the diffusion
+    :param get_params_diffusion: function that gets the parameters from diffusion state
+    ...
+    :return: init_fn, kernel, get_params
+    :rtype: Tuple
+    """
 
     # Check whether the diffusion is a palindrome (ie: splitting scheme)
     if type(update_diffusion)==tuple:
@@ -56,7 +64,22 @@ def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
                                                     Callable[[int, PRNGKey, SamplerState], SamplerState],
                                                     Callable[[SamplerState], PyTree]
                                                 ]:
-    "Build generic sghmc kernel"
+    """Build a sghmc kernel
+
+    Args:
+        init_fn_diffusion (Callable): [description]
+        update_diffusion (Callable): [description]
+        get_params_diffusion (Callable): [description]
+        resample_momentum (Callable): [description]
+        estimate_gradient (Callable): [description]
+        init_gradient (Callable): [description]
+        L (int): [description]
+        compiled_leapfrog (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: [description]
+    """
+    
 
     init_fn, langevin_kernel, get_params = _build_langevin_kernel(init_fn_diffusion, update_diffusion,
                         get_params_diffusion, estimate_gradient, init_gradient)
@@ -79,13 +102,46 @@ def _build_sghmc_kernel(init_fn_diffusion: Callable, update_diffusion: Callable,
 
 ### kernels
 
-def build_sgld_kernel(dt, loglikelihood, logprior, data, batch_size):
+def build_sgld_kernel(dt: float, loglikelihood: Callable, logprior: Callable, data: Tuple, batch_size: int)-> Tuple[
+                                                    Callable,
+                                                    Callable,
+                                                    Callable
+                                                ]:
+    """Build kernel for SGLD
+
+    Args:
+        dt (float): [description]
+        loglikelihood (Callable): [description]
+        logprior (Callable): [description]
+        data (Tuple): [description]
+        batch_size (int): [description]
+
+    Returns:
+        Tuple[ Callable, Callable, Callable ]: function to initiate state, transition kernel, and function to get parameters from state
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(grad_log_post, data, batch_size)
     init_fn, sgld_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)
     return init_fn, sgld_kernel, get_params
 
-def build_sgldCV_kernel(dt, loglikelihood, logprior, data, batch_size, centering_value):
+def build_sgldCV_kernel(dt: float, loglikelihood: Callable, logprior: Callable, data: Tuple, batch_size: int, centering_value: PyTree)-> Tuple[
+                                                    Callable,
+                                                    Callable,
+                                                    Callable
+                                                ]:
+    """Build SGLD-CV kernel
+
+    Args:
+        dt (float): [description]
+        loglikelihood (Callable): [description]
+        logprior (Callable): [description]
+        data (Tuple): [description]
+        batch_size (int): [description]
+        centering_value (PyTree): [description]
+
+    Returns:
+        Tuple[ Callable, Callable, Callable ]: [description]
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(grad_log_post, data, batch_size, centering_value)
     init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(*sgld(dt), estimate_gradient, init_gradient)

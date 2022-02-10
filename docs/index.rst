@@ -86,3 +86,15 @@ Table of contents
       :caption: FAQ
 
       FAQ
+
+.. toctree::
+      :maxdepth: 1
+      :caption: API 
+
+      kernels
+      diffusions
+      samplers
+      gradient_estimation
+      optimizer
+      util
+      ksd

@@ -1,10 +1,21 @@
 from jax import jit, vmap, lax
 import jax.numpy as jnp
+from .types import Array
 
 @jit
-def k_0_fun(parm1, parm2, gradlogp1, gradlogp2, c=1., beta=-0.5):
-    """
-    KSD kernel with the 2 norm
+def k_0_fun(parm1: Array, parm2: Array, gradlogp1: Array, gradlogp2:Array , c: float = 1., beta: float = -0.5) -> float:
+    """KSD kernel with the IMQ kernel and the 2 norm: http://proceedings.mlr.press/v70/gorham17a/gorham17a.pdf
+
+    Args:
+        parm1 (Array): [description]
+        parm2 (Array): [description]
+        gradlogp1 (Array): [description]
+        gradlogp2 (Array): [description]
+        c (float, optional): [description]. Defaults to 1..
+        beta (float, optional): [description]. Defaults to -0.5.
+
+    Returns:
+        float: [description]
     """
     diff = parm1-parm2
     dim = parm1.shape[0]
@@ -20,9 +31,15 @@ def k_0_fun(parm1, parm2, gradlogp1, gradlogp2, c=1., beta=-0.5):
 batch_k_0_fun_rows = jit(vmap(k_0_fun, in_axes=(None,0,None,0,None,None)))
 
 @jit
-def imq_KSD(sgld_samples, sgld_grads):
-    """
-    KSD with imq kernel
+def imq_KSD(sgld_samples: Array, sgld_grads: Array) -> float:
+    """KSD with imq kernel
+
+    Args:
+        sgld_samples (Array): [description]
+        sgld_grads (Array): [description]
+
+    Returns:
+        float: [description]
     """
     c, beta = 1., -0.5
     N = sgld_samples.shape[0]

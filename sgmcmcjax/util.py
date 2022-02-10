@@ -1,4 +1,4 @@
-from typing import Tuple, Callable
+from typing import Any, Callable, Tuple, Iterable, Union
 
 import jax.numpy as jnp
 from jax import grad, jit, vmap, lax, value_and_grad
@@ -6,6 +6,20 @@ from jax.experimental import host_callback
 from tqdm.auto import tqdm
 
 def build_grad_log_post(loglikelihood: Callable, logprior: Callable, data: Tuple, with_val: bool = False) -> Callable:
+    """Build the gradient of the log-posterior
+
+    Args:
+        loglikelihood (Callable): [description]
+        logprior (Callable): [description]
+        data (Tuple): [description]
+        with_val (bool, optional): [description]. Defaults to False.
+
+    Raises:
+        ValueError: [description]
+
+    Returns:
+        Callable: [description]
+    """
     if len(data)==1:
         batch_loglik = jit(vmap(loglikelihood, in_axes=(None, 0)))
     elif len(data)==2:
@@ -23,11 +37,19 @@ def build_grad_log_post(loglikelihood: Callable, logprior: Callable, data: Tuple
         grad_log_post = jit(grad(log_post))
     return grad_log_post
 
-def run_loop(f, state, xs, compiled=True):
-    """
-    Loop over an iterable and keep only the final state
+def run_loop(f: Callable, state: Any, xs: Iterable, compiled: bool=True) -> Any:
+    """Loop over an iterable and keep only the final state
     the function `f` should return `(state, None)`
     compiled: whether or not to run lax.scan or a Python loop
+
+    Args:
+        f (Callable): [description]
+        state (Any): [description]
+        xs (iter): [description]
+        compiled (Bool, optional): [description]. Defaults to True.
+
+    Returns:
+        Any: [description]
     """
     if compiled:
         state, _ = lax.scan(f, state, xs)
@@ -38,8 +60,17 @@ def run_loop(f, state, xs, compiled=True):
         return state
 
 
-def progress_bar_scan(num_samples, message=None):
-    "Progress bar for a JAX scan"
+def progress_bar_scan(num_samples:int , message: Union[None, str] = None) -> Callable:
+    """Decorator to build a progress bar 
+
+    Args:
+        num_samples (int): [description]
+        message (Union[None, str]): [description]
+
+    Returns:
+        Callable: [description]
+    """
+    
     if message is None:
             message = f"Running for {num_samples:,} iterations"
     tqdm_bars = {}

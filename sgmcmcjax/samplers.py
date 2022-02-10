@@ -1,4 +1,4 @@
-from typing import NamedTuple, Union, Any, Callable, Optional, Tuple
+from typing import NamedTuple, Any, Callable, Optional, Tuple
 from functools import partial
 import jax.numpy as jnp
 from jax import lax, jit, random
@@ -11,15 +11,23 @@ from .kernels import build_sgnht_kernel, build_badodab_kernel, build_sgnhtCV_ker
 from .util import progress_bar_scan
 from .types import PyTree, PRNGKey, SamplerState, SVRGState, DiffusionState
 
-"""
-Samplers: sgld, sgld_CV, sgld_SVRG, psgld, sghmc, sghmc_CV, sghmc_SVRG
-"""
+
 
 def _build_compiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState],
                             my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
                             get_params: Callable[[SamplerState], PyTree],
                             pbar: bool = True) -> Callable:
-    "Build generic compiled sampler"
+    """Build generic compiled sampler
+
+    Args:
+        init_fn (Callable[[PRNGKey, PyTree], SamplerState]): [description]
+        my_kernel (Callable[[int, PRNGKey, SamplerState], SamplerState]): [description]
+        get_params (Callable[[SamplerState], PyTree]): [description]
+        pbar (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        Callable: [description]
+    """
     @partial(jit, static_argnums=(1,))
     def sampler(key, Nsamples, params):
 
@@ -41,7 +49,17 @@ def _build_noncompiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState
                             my_kernel: Callable[[int, PRNGKey, SamplerState], SamplerState],
                             get_params: Callable[[SamplerState], PyTree],
                             pbar: bool = True) -> Callable:
-    "Build generic non-compiled sampler"
+    """Build generic non-compiled sampler
+
+    Args:
+        init_fn (Callable[[PRNGKey, PyTree], SamplerState]): [description]
+        my_kernel (Callable[[int, PRNGKey, SamplerState], SamplerState]): [description]
+        get_params (Callable[[SamplerState], PyTree]): [description]
+        pbar (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        Callable: [description]
+    """
     def sampler(key, Nsamples, params):
         samples = []
         key, subkey = random.split(key)
@@ -57,10 +75,16 @@ def _build_noncompiled_sampler(init_fn: Callable[[PRNGKey, PyTree], SamplerState
         return samples
     return sampler
 
-def sgmcmc_sampler(build_sampler_fn):
+def sgmcmc_sampler(build_sampler_fn: Callable) -> Callable:
+    """Decorator that turns a kernel factory into a sampler factory
+
+    Args:
+        build_sampler_fn (Callable): [description]
+
+    Returns:
+        Callable: [description]
     """
-    Decorator that turns a kernel factory into a sampler factory
-    """
+    
     @functools.wraps(build_sampler_fn)
     def wrapper(*args, **kwargs):
         compiled = kwargs.pop('compiled', True)

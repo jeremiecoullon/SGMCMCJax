@@ -17,6 +17,8 @@ EXTRAS = {
         "nb-black==1.0.7",
         "matplotlib==3.3.3",
         "sphinx-copybutton==0.3.5",
+        "Sphinx==4.4.0",
+        "isort==5.10.1"
     ],
 }
 
