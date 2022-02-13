@@ -15,12 +15,12 @@ def build_gradient_estimation_fn(
     """Build a standard gradient estimator
 
     Args:
-        grad_log_post (Callable): [description]
-        data (Tuple): [description]
-        batch_size (int): [description]
+        grad_log_post (Callable): gradient of the log-posterior
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
 
     Returns:
-        Tuple[Callable, Callable]: [description]
+        Tuple[Callable, Callable]: gradient estimation function and gradient initialisation function
     """
     assert type(data) == tuple
     N_data, *_ = data[0].shape
@@ -53,13 +53,13 @@ def build_gradient_estimation_fn_CV(
     """Build a Control Variates gradient estimator
 
     Args:
-        grad_log_post (Callable): [description]
-        data (Tuple): [description]
-        batch_size (int): [description]
-        centering_value (PyTree): [description]
+        grad_log_post (Callable): gradient of the log-posterior
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        centering_value (PyTree): Centering value for the control variates (should be the MAP)
 
     Returns:
-        Tuple[Callable, Callable]: [description]
+        Tuple[Callable, Callable]: gradient estimation function and gradient initialisation function
     """
     assert type(data) == tuple
     N_data, *_ = data[0].shape
@@ -100,13 +100,13 @@ def build_gradient_estimation_fn_SVRG(
     """Build a SVRG gradient estimator
 
     Args:
-        grad_log_post (Callable): [description]
-        data (Tuple): [description]
-        batch_size (int): [description]
-        update_rate (int): [description]
+        grad_log_post (Callable): gradient of the log-posterior
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        update_rate (int): how often to update the centering value in the gradient estimator
 
     Returns:
-        Tuple[Callable, Callable]: [description]
+        Tuple[Callable, Callable]: gradient estimation function and gradient initialisation function
     """
     assert type(data) == tuple
     N_data, *_ = data[0].shape

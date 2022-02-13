@@ -1,41 +1,41 @@
-"""A diffusion is modeled as an ``(init_fun, update_fun, get_params)`` triple of
-functions, where the component functions have these signatures:
+# """A diffusion is modeled as an ``(init_fun, update_fun, get_params)`` triple of
+# functions, where the component functions have these signatures:
 
-init_fn
-::
-  init_fn(params)
-  Args:
-    params: pytree representing the initial parameters.
-  Returns:
-    A pytree representing the initial diffusion state, which includes the
-    initial parameters and may also include auxiliary values like initial
-    momentum. The optimizer state pytree structure generally differs from that
-    of `params`.
-::
+# init_fn
+# ::
+#   init_fn(params)
+#   Args:
+#     params: pytree representing the initial parameters.
+#   Returns:
+#     A pytree representing the initial diffusion state, which includes the
+#     initial parameters and may also include auxiliary values like initial
+#     momentum. The optimizer state pytree structure generally differs from that
+#     of `params`.
+# ::
 
-update_fn
-::
-  update_fn(key, step, grads, diffusion_state)
-  Args:
-    key: random key
-    step: integer representing the step index.
-    grads: a pytree with the same structure as `get_params(opt_state)`
-      representing the gradients to be used in updating the diffusion state.
-    diffusion_state: a pytree representing the diffusion state to be updated.
-  Returns:
-    A pytree with the same structure as the `diffusion_state` argument representing
-    the updated optimizer state.
-::
+# update_fn
+# ::
+#   update_fn(key, step, grads, diffusion_state)
+#   Args:
+#     key: random key
+#     step: integer representing the step index.
+#     grads: a pytree with the same structure as `get_params(opt_state)`
+#       representing the gradients to be used in updating the diffusion state.
+#     diffusion_state: a pytree representing the diffusion state to be updated.
+#   Returns:
+#     A pytree with the same structure as the `diffusion_state` argument representing
+#     the updated optimizer state.
+# ::
 
-get_params
-::
-  get_params(diffusion_state)
-  Args:
-    diffusion_state: pytree representing an optimizer state.
-  Returns:
-    A pytree representing the parameters extracted from `diffusion_state`, such that
-    the invariant `params == get_params(init_fun(params))` holds true.
-"""
+# get_params
+# ::
+#   get_params(diffusion_state)
+#   Args:
+#     diffusion_state: pytree representing an optimizer state.
+#   Returns:
+#     A pytree representing the parameters extracted from `diffusion_state`, such that
+#     the invariant `params == get_params(init_fun(params))` holds true.
+# """
 from typing import Callable, Tuple
 
 import jax.numpy as jnp
@@ -49,7 +49,7 @@ def sgld(dt: float) -> Tuple[Callable, Callable, Callable]:
     """SGLD diffusion
     https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
 
-    This is an Euler-Maruyam solver for an overdamped Langevin diuffusion
+    This is an Euler-Maruyam solver for an overdamped Langevin diffusion
 
     Args:
         dt (float): step size
@@ -162,12 +162,12 @@ def sghmc(
     dt: float, alpha: float = 0.01, beta: float = 0
 ) -> Tuple[Callable, Callable, Callable, Callable]:
     """diffusion for stochastic gradient HMC.
-    See paper: https://arxiv.org/abs/1402.4102
+    See paper: https://arxiv.org/abs/1402.4102. Uses the parametrisation in section G (appendix)
 
     Args:
         dt (float): step size
-        alpha (float, optional): [description]. Defaults to 0.01.
-        beta (float, optional): [description]. Defaults to 0.
+        alpha (float, optional): friction coefficient. Defaults to 0.01.
+        beta (float, optional): estimation of the stochastic gradient noise. Defaults to 0.
 
     Returns:
         Tuple[Callable, Callable, Callable, Callable]: An (init_fun, update_fun, get_params, resample_momentum) triple.
@@ -205,12 +205,12 @@ def sghmc(
 def baoab(
     dt: float, gamma: float, tau: float = 1.0
 ) -> Tuple[Callable, Callable, Callable, Callable]:
-    """BAOAB splitting scheme for the underdampled Langevin diffusion
+    """BAOAB splitting scheme for the underdampled Langevin diffusion. https://aip.scitation.org/doi/abs/10.1063/1.4802990
 
     Args:
         dt (float): step size
-        gamma (float): [description]
-        tau (float, optional): [description]. Defaults to 1..
+        gamma (float): friction coefficient
+        tau (float, optional): temperature. Defaults to 1.
 
     Returns:
         Tuple[Callable, Callable, Callable, Callable]: An (init_fun, (update1, update2), get_params) triple.
@@ -254,7 +254,7 @@ def sgnht(dt: float, a: float = 0.01) -> Tuple[Callable, Callable, Callable]:
 
     Args:
         dt (float): step size
-        a (float, optional): [description]. Defaults to 0.01.
+        a (float, optional): diffusion factor. Defaults to 0.01.
 
     Returns:
         Tuple[Callable, Callable, Callable]: An (init_fun, update_fun, get_params) triple.
@@ -302,7 +302,7 @@ def badodab(
 
     Args:
         dt (float): step size
-        a (float, optional): [description]. Defaults to 0.01.
+        a (float, optional): initial value of alpha. Defaults to 0.01.
 
     Returns:
         Tuple[Callable, Callable, Callable, Callable]: An (init_fun, update_fun, get_params) triple.

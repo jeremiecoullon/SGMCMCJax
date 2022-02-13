@@ -4,9 +4,12 @@ import jax.numpy as jnp
 from jax import jit, lax, random
 
 from .diffusions import badodab, baoab, psgld, sghmc, sgld, sgldAdam, sgnht
-from .gradient_estimation import (SVRGState, build_gradient_estimation_fn,
-                                  build_gradient_estimation_fn_CV,
-                                  build_gradient_estimation_fn_SVRG)
+from .gradient_estimation import (
+    SVRGState,
+    build_gradient_estimation_fn,
+    build_gradient_estimation_fn_CV,
+    build_gradient_estimation_fn_SVRG,
+)
 from .types import DiffusionState, PRNGKey, PyTree, SamplerState, SVRGState
 from .util import build_grad_log_post, run_loop
 
@@ -32,7 +35,7 @@ def _build_langevin_kernel(
         init_gradient (Callable): initialise the state of the gradient
 
     Returns:
-        Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: [description]
+        Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: An (init_fun, kernel, get_params) triple.
     """
 
     # Check whether the diffusion is a palindrome (ie: splitting scheme)
@@ -86,14 +89,14 @@ def _build_sghmc_kernel(
         init_fn_diffusion (Callable): create the initial state of the diffusion
         update_diffusion (Any): updates the state of the diffusion
         get_params_diffusion (Callable): gets the parameters from the state of the diffusion
-        resample_momentum (Callable): [description]
-        estimate_gradient (Callable): [description]
-        init_gradient (Callable): [description]
+        resample_momentum (Callable): function that resamples momentum
+        estimate_gradient (Callable): gradient estimation function
+        init_gradient (Callable): function to initialise the state of the gradient
         L (int): number of leapfrog steps
         compiled_leapfrog (bool, optional): whether or not the integrator is compiled. Defaults to True.
 
     Returns:
-        Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: [description]
+        Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: An (init_fun, kernel, get_params) triple.
     """
 
     init_fn, langevin_kernel, get_params = _build_langevin_kernel(
@@ -130,11 +133,11 @@ def build_sgld_kernel(
     """Build kernel for SGLD
 
     Args:
-        dt (float): [description]
-        loglikelihood (Callable): [description]
-        logprior (Callable): [description]
-        data (Tuple): [description]
-        batch_size (int): [description]
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
 
     Returns:
         Tuple[ Callable, Callable, Callable ]: An (init_fun, kernel, get_params) triple.
@@ -160,12 +163,12 @@ def build_sgldCV_kernel(
     """Build SGLD-CV kernel
 
     Args:
-        dt (float): [description]
-        loglikelihood (Callable): [description]
-        logprior (Callable): [description]
-        data (Tuple): [description]
-        batch_size (int): [description]
-        centering_value (PyTree): [description]
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        centering_value (PyTree): Centering value for the control variates (should be the MAP)
 
     Returns:
         Tuple[ Callable, Callable, Callable ]: An (init_fun, kernel, get_params) triple.
@@ -194,7 +197,7 @@ def build_sgld_SVRG_kernel(
         dt (float): step size
         loglikelihood (Callable): log-likelihood for a single data point
         logprior (Callable): log-prior for a single data point
-        data (Tuple): [description]
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
         batch_size (int): batch size
         update_rate (int): how often to update the centering value in the gradient estimator
 
@@ -212,8 +215,28 @@ def build_sgld_SVRG_kernel(
 
 
 def build_psgld_kernel(
-    dt: float, loglikelihood, logprior, data, batch_size, alpha=0.99, eps=1e-5
-):
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    alpha: float = 0.99,
+    eps: float = 1e-5,
+) -> Tuple[Callable, Callable, Callable]:
+    """build preconditioned SGLD kernel
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        alpha (float, optional): balances the weights of historical and current gradients. Defaults to 0.99.
+        eps (float, optional): controls the extremes of the curvature of preconditioner. Defaults to 1e-5.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -225,8 +248,30 @@ def build_psgld_kernel(
 
 
 def build_sgldAdam_kernel(
-    dt, loglikelihood, logprior, data, batch_size, beta1=0.9, beta2=0.999, eps=1e-8
-):
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    beta1: float = 0.9,
+    beta2: float = 0.999,
+    eps: float = 1e-8,
+) -> Tuple[Callable, Callable, Callable]:
+    """build SGLD-adam kernel. See appendix in paper: https://arxiv.org/abs/2105.13059v1
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        beta1 (float, optional): weights for the first moment of the gradients. Defaults to 0.9.
+        beta2 (float, optional): weights for the second moment of the gradients. Defaults to 0.999.
+        eps (float, optional): small value to avoid instabilities. Defaults to 1e-8.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -237,7 +282,27 @@ def build_sgldAdam_kernel(
     return init_fn, sgldAdam_kernel, get_params
 
 
-def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
+def build_sgnht_kernel(
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    a: float = 0.01,
+) -> Tuple[Callable, Callable, Callable]:
+    """build stochastic gradient Nose Hoover Thermostats kernel. From http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        a (float, optional): diffusion factor. Defaults to 0.01.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -249,8 +314,28 @@ def build_sgnht_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
 
 
 def build_sgnhtCV_kernel(
-    dt, loglikelihood, logprior, data, batch_size, centering_value, a=0.01
-):
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    centering_value: PyTree,
+    a: float = 0.01,
+) -> Tuple[Callable, Callable, Callable]:
+    """build stochastic gradient Nose Hoover Thermostats kernel with Control Variates
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        centering_value (PyTree): Centering value for the control variates (should be the MAP)
+        a (float, optional): diffusion factor. Defaults to 0.01.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
@@ -261,7 +346,29 @@ def build_sgnhtCV_kernel(
     return init_fn, sgnht_kernel, get_params
 
 
-def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau=1):
+def build_baoab_kernel(
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    gamma: float,
+    tau: float = 1.0,
+) -> Tuple[Callable, Callable, Callable]:
+    """build BAOAB kernel, a splitting scheme for the underdampled Langevin diffusion: https://aip.scitation.org/doi/abs/10.1063/1.4802990
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        gamma (float): friction coefficient
+        tau (float, optional): temperature. Defaults to 1.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -272,7 +379,27 @@ def build_baoab_kernel(dt, gamma, loglikelihood, logprior, data, batch_size, tau
     return init_fn, baoab_kernel, get_params
 
 
-def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
+def build_badodab_kernel(
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    a: float = 0.01,
+) -> Tuple[Callable, Callable, Callable]:
+    """build BADODAB kernel, a splitting scheme for the 3-equation Langevin diffusion. See https://arxiv.org/abs/1505.06889
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        a (float, optional): initial value of alpha. Defaults to 0.01.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -284,8 +411,28 @@ def build_badodab_kernel(dt, loglikelihood, logprior, data, batch_size, a=0.01):
 
 
 def build_badodabCV_kernel(
-    dt, loglikelihood, logprior, data, batch_size, centering_value, a=0.01
-):
+    dt: float,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    centering_value: PyTree,
+    a: float = 0.01,
+) -> Tuple[Callable, Callable, Callable]:
+    """build BADODAB kernel with Control Variates
+
+    Args:
+        dt (float): step size
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        centering_value (PyTree): Centering value for the control variates (should be the MAP)
+        a (float, optional): initial value of alpha. Defaults to 0.01.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
@@ -300,8 +447,30 @@ def build_badodabCV_kernel(
 
 
 def build_sghmc_kernel(
-    dt, L, loglikelihood, logprior, data, batch_size, alpha=0.01, compiled_leapfrog=True
-):
+    dt: float,
+    L: int,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    alpha: float = 0.01,
+    compiled_leapfrog: bool = True,
+) -> Tuple[Callable, Callable, Callable]:
+    """build stochastic gradient HMC kernel. https://arxiv.org/abs/1402.4102
+
+    Args:
+        dt (float): step size
+        L (int): number of leapfrog steps
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        alpha (float, optional): friction coefficient. Defaults to 0.01.
+        compiled_leapfrog (bool, optional): whether or not the loop is performed with lax.scan or not. Otherwise run a native Python loop. Defaults to True.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
@@ -317,16 +486,32 @@ def build_sghmc_kernel(
 
 
 def build_sghmcCV_kernel(
-    dt,
-    L,
-    loglikelihood,
-    logprior,
-    data,
-    batch_size,
-    centering_value,
-    alpha=0.01,
-    compiled_leapfrog=True,
-):
+    dt: float,
+    L: int,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    centering_value: PyTree,
+    alpha: float = 0.01,
+    compiled_leapfrog: bool = True,
+) -> Tuple[Callable, Callable, Callable]:
+    """build stochatic gradient HMC kernel with Control Variates
+
+    Args:
+        dt (float): step size
+        L (int): number of leapfrog steps
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        centering_value (PyTree): Centering value for the control variates (should be the MAP)
+        alpha (float, optional): friction coefficient. Defaults to 0.01.
+        compiled_leapfrog (bool, optional): whether or not the loop is performed with lax.scan or not. Otherwise run a native Python loop. Defaults to True.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
@@ -342,16 +527,32 @@ def build_sghmcCV_kernel(
 
 
 def build_sghmc_SVRG_kernel(
-    dt,
-    L,
-    loglikelihood,
-    logprior,
-    data,
-    batch_size,
-    update_rate,
-    alpha=0.01,
-    compiled_leapfrog=True,
-):
+    dt: float,
+    L: int,
+    loglikelihood: Callable,
+    logprior: Callable,
+    data: Tuple,
+    batch_size: int,
+    update_rate: int,
+    alpha: float = 0.01,
+    compiled_leapfrog: bool = True,
+) -> Tuple[Callable, Callable, Callable]:
+    """build stochatic gradient HMC kernel with SVRG
+
+    Args:
+        dt (float): step size
+        L (int): number of leapfrog steps
+        loglikelihood (Callable): log-likelihood for a single data point
+        logprior (Callable): log-prior for a single data point
+        data (Tuple): tuple of data. It should either have a single array (for unsupervised problems) or have two arrays (for supervised problems)
+        batch_size (int): batch size
+        update_rate (int): how often to update the centering value in the gradient estimator
+        alpha (float, optional): friction coefficient. Defaults to 0.01.
+        compiled_leapfrog (bool, optional): whether or not the loop is performed with lax.scan or not. Otherwise run a native Python loop. Defaults to True.
+
+    Returns:
+        Tuple[Callable, Callable, Callable]: An (init_fun, kernel, get_params) triple.
+    """
     grad_log_post = build_grad_log_post(loglikelihood, logprior, data)
     estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(
         grad_log_post, data, batch_size, update_rate

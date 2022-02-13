@@ -127,7 +127,7 @@ BADODAB:
   v_{n+1} &= \tilde{v}_{n+1/2} +  \frac{dt}{2} \hat{\nabla} \log \pi(x_{n+1}) \\
   \end{cases}
 
-The tuning parameters are :math:`dt` and :math:`a` (default: :math:`a=0.01`). The two other parameters are fixed: :math:`\mu=1` and :math:`\sigma=1`.
+The tuning parameters are :math:`dt` and :math:`a` (the initial value of :math:`\alpha` with default: :math:`a=0.01`). The two other parameters are fixed: :math:`\mu=1` and :math:`\sigma=1`.
 
 **Pros:** The friction term adapts to the amount of noise in the gradient estimate, and the splitting scheme is more accurate and stable than the Euler method in `SGNHT`_. This allows a larger range of step sizes and smaller minibatches.
 

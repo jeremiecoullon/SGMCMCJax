@@ -16,12 +16,12 @@ def k_0_fun(
     """KSD kernel with the IMQ kernel and the 2 norm: http://proceedings.mlr.press/v70/gorham17a/gorham17a.pdf
 
     Args:
-        parm1 (Array): [description]
-        parm2 (Array): [description]
-        gradlogp1 (Array): [description]
-        gradlogp2 (Array): [description]
-        c (float, optional): [description]. Defaults to 1..
-        beta (float, optional): [description]. Defaults to -0.5.
+        parm1 (Array): sampled parameter 1
+        parm2 (Array): sampled parameter 2
+        gradlogp1 (Array): gradient of sampled parameter 1
+        gradlogp2 (Array): gradient of sampled parameter 2
+        c (float, optional): intercept parameter in the IMQ kernel. Defaults to 1.
+        beta (float, optional): exponent parameter in the IMQ kernel. Defaults to -0.5.
 
     Returns:
         float: [description]
@@ -41,25 +41,26 @@ _batch_k_0_fun_rows = jit(vmap(k_0_fun, in_axes=(None, 0, None, 0, None, None)))
 
 
 @jit
-def imq_KSD(sgld_samples: Array, sgld_grads: Array) -> float:
-    """KSD with imq kernel
+def imq_KSD(samples: Array, grads: Array) -> float:
+    """Kernel Stein Discrepancy with IMQ kernel
 
     Args:
-        sgld_samples (Array): [description]
-        sgld_grads (Array): [description]
+        samples (Array): MCMC samples
+        grads (Array): gradients of the MCMC samples
 
     Returns:
-        float: [description]
+        float: estimate of the KSD
     """
     c, beta = 1.0, -0.5
-    N = sgld_samples.shape[0]
+    N = samples.shape[0]
 
+    # we use lax.scan rather than a nested vmap as the latter becomes very slow for high dimensional problems with lots of samples.
     def body_ksd(le_sum, x):
         my_sample, my_grad = x
         le_sum += jnp.sum(
-            _batch_k_0_fun_rows(my_sample, sgld_samples, my_grad, sgld_grads, c, beta)
+            _batch_k_0_fun_rows(my_sample, samples, my_grad, grads, c, beta)
         )
         return le_sum, None
 
-    le_sum, _ = lax.scan(body_ksd, 0.0, (sgld_samples, sgld_grads))
+    le_sum, _ = lax.scan(body_ksd, 0.0, (samples, grads))
     return jnp.sqrt(le_sum) / N

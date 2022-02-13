@@ -82,7 +82,7 @@ def progress_bar_scan(num_samples: int, message: Union[None, str] = None) -> Cal
         message (Union[None, str]): message to display in the progress bar. Defaults to f'Running for {num_samples:,} iterations'
 
     Returns:
-        Callable: decorator to apply to the body body
+        Callable: decorator to apply to the body function used in lax.scan
     """
 
     if message is None:
