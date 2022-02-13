@@ -24,7 +24,7 @@ def k_0_fun(
         beta (float, optional): exponent parameter in the IMQ kernel. Defaults to -0.5.
 
     Returns:
-        float: [description]
+        float: value of kernel for the pair of samples
     """
     diff = parm1 - parm2
     dim = parm1.shape[0]
