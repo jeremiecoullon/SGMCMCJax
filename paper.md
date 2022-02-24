@@ -7,7 +7,7 @@ tags:
   - SGMCMC
   - Bayesian inference
 authors:
-  - name: Jeremie Coullon^[co-first author] # note this makes a footnote saying 'co-first author'
+  - name: Jeremie Coullon^[first author]
     orcid: 0000-0002-7032-3425
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Christopher Nemeth
