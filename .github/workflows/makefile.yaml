@@ -17,8 +17,8 @@ jobs:
       
     - name: Run tests
       run: |
-        make
-        make test
+        mypy sgmcmcjax
+        pytest -v sgmcmcjax tests
   
   lint:
     
@@ -30,3 +30,4 @@ jobs:
       run: |
         pip install -r requirements-dev.txt
         black --diff --check $(git ls-files '*.py')
+        isort .

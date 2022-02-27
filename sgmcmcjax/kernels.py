@@ -4,12 +4,9 @@ import jax.numpy as jnp
 from jax import jit, lax, random
 
 from .diffusions import badodab, baoab, psgld, sghmc, sgld, sgldAdam, sgnht
-from .gradient_estimation import (
-    SVRGState,
-    build_gradient_estimation_fn,
-    build_gradient_estimation_fn_CV,
-    build_gradient_estimation_fn_SVRG,
-)
+from .gradient_estimation import (SVRGState, build_gradient_estimation_fn,
+                                  build_gradient_estimation_fn_CV,
+                                  build_gradient_estimation_fn_SVRG)
 from .types import DiffusionState, PRNGKey, PyTree, SamplerState, SVRGState
 from .util import build_grad_log_post, run_loop
 
