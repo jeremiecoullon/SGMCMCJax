@@ -17,7 +17,6 @@ jobs:
       
     - name: Run tests
       run: |
-        mypy sgmcmcjax
         pytest -v sgmcmcjax tests
   
   lint:
@@ -27,7 +26,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: code quality checks
-      run: |
-        pip install -r requirements-dev.txt
-        black --diff --check $(git ls-files '*.py')
-        cd sgmcmcjax; isort .
+      run: pip install -r requirements-dev.txt
+      run: mypy sgmcmcjax
+      run: black --diff --check $(git ls-files '*.py')
+      run: isort .
