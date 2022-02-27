@@ -1,5 +1,4 @@
-lint-checks:
-	mypy sgmcmcjax/
-
 test:
+	mypy sgmcmcjax/
 	pytest -v sgmcmcjax tests
+
