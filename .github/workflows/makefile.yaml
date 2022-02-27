@@ -20,11 +20,3 @@ jobs:
         make
         make test
   
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-    
-    run: |
-      pip install -r requirements-dev.txt
-      black --diff --check $(git ls-files '*.py')
