@@ -36,7 +36,7 @@
 #     A pytree representing the parameters extracted from `diffusion_state`, such that
 #     the invariant `params == get_params(init_fun(params))` holds true.
 # """
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 
 import jax.numpy as jnp
 from jax import lax, random
@@ -45,7 +45,7 @@ from .diffusion_util import diffusion, diffusion_palindrome, diffusion_sghmc
 
 
 @diffusion
-def sgld(dt: float) -> Tuple[Callable, Callable, Callable]:
+def sgld(dt) -> Tuple[Callable, Callable, Callable]:
     """SGLD diffusion
     https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
 
@@ -75,7 +75,7 @@ def sgld(dt: float) -> Tuple[Callable, Callable, Callable]:
 
 @diffusion
 def psgld(
-    dt: float, alpha: float = 0.99, eps: float = 1e-5
+    dt, alpha: float = 0.99, eps: float = 1e-5
 ) -> Tuple[Callable, Callable, Callable]:
     """Preconditioned SGLD diffusion
     See algorithm 1 in paper: https://arxiv.org/pdf/1512.07666.pdf
@@ -114,7 +114,7 @@ def psgld(
 
 @diffusion
 def sgldAdam(
-    dt: float, beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8
+    dt, beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8
 ) -> Tuple[Callable, Callable, Callable]:
     """'ADAM'-like SGMCMC diffusion. See appendix in paper: https://arxiv.org/abs/2105.13059v1
 
@@ -159,7 +159,7 @@ def sgldAdam(
 
 @diffusion_sghmc
 def sghmc(
-    dt: float, alpha: float = 0.01, beta: float = 0
+    dt, alpha: float = 0.01, beta: float = 0
 ) -> Tuple[Callable, Callable, Callable, Callable]:
     """diffusion for stochastic gradient HMC.
     See paper: https://arxiv.org/abs/1402.4102. Uses the parametrisation in section G (appendix)
@@ -203,8 +203,8 @@ def sghmc(
 
 @diffusion_palindrome
 def baoab(
-    dt: float, gamma: float, tau: float = 1.0
-) -> Tuple[Callable, Callable, Callable, Callable]:
+    dt, gamma: float, tau: float = 1.0
+) -> Tuple[Callable, Tuple[Callable, Callable], Callable]:
     """BAOAB splitting scheme for the underdampled Langevin diffusion. https://aip.scitation.org/doi/abs/10.1063/1.4802990
 
     Args:
@@ -213,7 +213,7 @@ def baoab(
         tau (float, optional): temperature. Defaults to 1.
 
     Returns:
-        Tuple[Callable, Callable, Callable, Callable]: An (init_fun, (update1, update2), get_params) triple.
+        Tuple[Callable, Tuple[Callable, Callable], Callable]: An (init_fun, (update1, update2), get_params) triple.
     """
     dt = make_schedule(dt)
 
@@ -248,7 +248,7 @@ def baoab(
 
 
 @diffusion
-def sgnht(dt: float, a: float = 0.01) -> Tuple[Callable, Callable, Callable]:
+def sgnht(dt, a: float = 0.01) -> Tuple[Callable, Callable, Callable]:
     """Euler solver for the SG-NHT diffusion
     See algorithm 2 in http://people.ee.duke.edu/~lcarin/sgnht-4.pdf
 
@@ -295,8 +295,8 @@ def sgnht(dt: float, a: float = 0.01) -> Tuple[Callable, Callable, Callable]:
 
 @diffusion_palindrome
 def badodab(
-    dt: float, a: float = 0.01
-) -> Tuple[Callable, Callable, Callable, Callable]:
+    dt, a: float = 0.01
+) -> Tuple[Callable, Tuple[Callable, Callable], Callable]:
     """Splitting scheme for the 3-equation Langevin diffusion. See https://arxiv.org/abs/1505.06889
     This is a more stable discretisation than SG-NHT
 
@@ -305,7 +305,7 @@ def badodab(
         a (float, optional): initial value of alpha. Defaults to 0.01.
 
     Returns:
-        Tuple[Callable, Callable, Callable, Callable]: An (init_fun, update_fun, get_params) triple.
+        Tuple[Callable, Tuple[Callable, Callable], Callable]: An (init_fun, update_fun, get_params) triple.
     """
     dt = make_schedule(dt)
 
@@ -374,7 +374,7 @@ def cyclical_schedule(alpha_0: float, M: int, K: int) -> Callable:
     return schedule
 
 
-def make_schedule(scalar_or_schedule: Callable):
+def make_schedule(scalar_or_schedule: Union[float, Callable]) -> Callable:
     if callable(scalar_or_schedule):
         return scalar_or_schedule
     elif jnp.ndim(scalar_or_schedule) == 0:
