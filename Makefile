@@ -1,4 +1,4 @@
 test:
 	mypy sgmcmcjax/
-	pytest -v sgmcmcjax tests
+	pytest -v sgmcmcjax tests --cov=sgmcmcjax --cov-report=html
 
