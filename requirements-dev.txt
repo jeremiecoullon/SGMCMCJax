@@ -6,3 +6,7 @@ matplotlib==3.3.3
 sphinx
 mypy==0.910
 mypy-extensions==0.4.3
+pytest==6.2.4
+black==22.1.0
+isort==5.10.1
+pytest-cov==3.0.0

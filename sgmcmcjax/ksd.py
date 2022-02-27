@@ -28,8 +28,8 @@ def k_0_fun(
     """
     diff = parm1 - parm2
     dim = parm1.shape[0]
-    base = c ** 2 + jnp.dot(diff, diff)
-    term1 = jnp.dot(gradlogp1, gradlogp2) * base ** beta
+    base = c**2 + jnp.dot(diff, diff)
+    term1 = jnp.dot(gradlogp1, gradlogp2) * base**beta
     term2 = -2 * beta * jnp.dot(gradlogp1, diff) * base ** (beta - 1)
     term3 = 2 * beta * jnp.dot(gradlogp2, diff) * base ** (beta - 1)
     term4 = -2 * dim * beta * (base ** (beta - 1))

@@ -1,0 +1,44 @@
+name: Makefile CI
+
+on: [push]
+jobs:
+  build:
+    name: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install dependencies
+      run: |
+        python setup.py develop --user
+        pip install -r requirements-dev.txt
+
+    - name: Run tests
+      run: |
+        pytest -v sgmcmcjax tests
+
+
+  lint:
+    name: linting
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        python setup.py develop --user
+        pip install -r requirements-dev.txt
+
+    - name: run mypy
+      run: mypy sgmcmcjax
+
+    - name: run black
+      run: black --diff --check $(git ls-files '*.py')
+
+    - name: run isort
+      run: isort .
+        

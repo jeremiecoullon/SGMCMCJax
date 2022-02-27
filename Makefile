@@ -1,5 +1,4 @@
-lint-checks:
-	mypy sgmcmcjax/
-
 test:
-		pytest -v sgmcmcjax tests
+	mypy sgmcmcjax/
+	pytest -v sgmcmcjax tests --cov=sgmcmcjax --cov-report=html
+

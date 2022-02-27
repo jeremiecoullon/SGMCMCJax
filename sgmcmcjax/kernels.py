@@ -146,8 +146,9 @@ def build_sgld_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, update_diff, get_p_diff = sgld(dt)
     init_fn, sgld_kernel, get_params = _build_langevin_kernel(
-        *sgld(dt), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgld_kernel, get_params
 
@@ -177,8 +178,9 @@ def build_sgldCV_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
     )
+    init_diff, update_diff, get_p_diff = sgld(dt)
     init_fn, sgldCV_kernel, get_params = _build_langevin_kernel(
-        *sgld(dt), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgldCV_kernel, get_params
 
@@ -208,8 +210,9 @@ def build_sgld_SVRG_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(
         grad_log_post, data, batch_size, update_rate
     )
+    init_diff, update_diff, get_p_diff = sgld(dt)
     init_fn, sgldSVRG_kernel, get_params = _build_langevin_kernel(
-        *sgld(dt), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgldSVRG_kernel, get_params
 
@@ -241,8 +244,9 @@ def build_psgld_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, update_diff, get_p_diff = psgld(dt, alpha, eps)
     init_fn, sgld_kernel, get_params = _build_langevin_kernel(
-        *psgld(dt, alpha, eps), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgld_kernel, get_params
 
@@ -276,8 +280,9 @@ def build_sgldAdam_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, update_diff, get_p_diff = sgldAdam(dt, beta1, beta2, eps)
     init_fn, sgldAdam_kernel, get_params = _build_langevin_kernel(
-        *sgldAdam(dt, beta1, beta2, eps), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgldAdam_kernel, get_params
 
@@ -307,8 +312,9 @@ def build_sgnht_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, update_diff, get_p_diff = sgnht(dt, a)
     init_fn, sgnht_kernel, get_params = _build_langevin_kernel(
-        *sgnht(dt, a), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgnht_kernel, get_params
 
@@ -340,8 +346,9 @@ def build_sgnhtCV_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
     )
+    init_diff, update_diff, get_p_diff = sgnht(dt, a)
     init_fn, sgnht_kernel, get_params = _build_langevin_kernel(
-        *sgnht(dt, a), estimate_gradient, init_gradient
+        init_diff, update_diff, get_p_diff, estimate_gradient, init_gradient
     )
     return init_fn, sgnht_kernel, get_params
 
@@ -373,8 +380,13 @@ def build_baoab_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, (update_diff1, update_diff1), get_p_diff = baoab(dt, gamma, tau)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        *baoab(dt, gamma, tau), estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -404,8 +416,13 @@ def build_badodab_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, (update_diff1, update_diff1), get_p_diff = badodab(dt, a)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        *badodab(dt, a), estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -437,8 +454,13 @@ def build_badodabCV_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
     )
+    init_diff, (update_diff1, update_diff1), get_p_diff = badodab(dt, a)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        *badodab(dt, a), estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -475,12 +497,16 @@ def build_sghmc_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn(
         grad_log_post, data, batch_size
     )
+    init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        *sghmc(dt, alpha),
+        init_diff,
+        update_diff,
+        get_p_diff,
+        resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params
 
@@ -516,12 +542,16 @@ def build_sghmcCV_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
     )
+    init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        *sghmc(dt, alpha),
+        init_diff,
+        update_diff,
+        get_p_diff,
+        resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params
 
@@ -557,11 +587,15 @@ def build_sghmc_SVRG_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_SVRG(
         grad_log_post, data, batch_size, update_rate
     )
+    init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        *sghmc(dt, alpha),
+        init_diff,
+        update_diff,
+        get_p_diff,
+        resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params
