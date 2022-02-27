@@ -30,4 +30,4 @@ jobs:
       run: |
         pip install -r requirements-dev.txt
         black --diff --check $(git ls-files '*.py')
-        isort .
+        cd sgmcmcjax; isort .
