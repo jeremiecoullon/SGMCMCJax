@@ -80,6 +80,6 @@ To install the development version run:
 ```
 git clone https://github.com/jeremiecoullon/SGMCMCJax.git
 cd SGMCMCJax
-python setup.py develop
+python -m pip install -e .
 ```
-Then run the tests with `pip install pytest; make`
+Then run the tests with `pip install -r requirements-dev.txt; make`
