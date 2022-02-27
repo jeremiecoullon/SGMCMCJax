@@ -13,7 +13,9 @@ jobs:
       run: |
         python setup.py develop --user
         pip install -r requirements-dev.txt
-        make
+        
       
-    - name: Run check
-      run: make 
+    - name: Run tests
+      run: |
+        make
+        make test
