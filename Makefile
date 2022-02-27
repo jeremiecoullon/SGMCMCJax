@@ -2,4 +2,4 @@ lint-checks:
 	mypy sgmcmcjax/
 
 test:
-		pytest -v sgmcmcjax tests
+	pytest -v sgmcmcjax tests

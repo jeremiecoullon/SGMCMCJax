@@ -1,30 +1,16 @@
 import jax.numpy as jnp
 import pytest
 from jax import random
-
 # import model and dataset with 2 different parameter shapes
-from models import (
-    X_data,
-    loglikelihood_array,
-    loglikelihood_list_array,
-    logprior_array,
-    logprior_list_array,
-)
+from models import (X_data, loglikelihood_array, loglikelihood_list_array,
+                    logprior_array, logprior_list_array)
 
-from sgmcmcjax.samplers import (
-    build_badodab_sampler,
-    build_badodabCV_sampler,
-    build_baoab_sampler,
-    build_psgld_sampler,
-    build_sghmc_sampler,
-    build_sghmc_SVRG_sampler,
-    build_sghmcCV_sampler,
-    build_sgld_sampler,
-    build_sgld_SVRG_sampler,
-    build_sgldCV_sampler,
-    build_sgnht_sampler,
-    build_sgnhtCV_sampler,
-)
+from sgmcmcjax.samplers import (build_badodab_sampler, build_badodabCV_sampler,
+                                build_baoab_sampler, build_psgld_sampler,
+                                build_sghmc_sampler, build_sghmc_SVRG_sampler,
+                                build_sghmcCV_sampler, build_sgld_sampler,
+                                build_sgld_SVRG_sampler, build_sgldCV_sampler,
+                                build_sgnht_sampler, build_sgnhtCV_sampler)
 
 Ndata, D = X_data.shape
 data = (X_data,)

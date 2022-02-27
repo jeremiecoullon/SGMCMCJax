@@ -6,20 +6,12 @@ import jax.numpy as jnp
 from jax import jit, lax, random
 from tqdm.auto import tqdm
 
-from .kernels import (
-    build_badodab_kernel,
-    build_badodabCV_kernel,
-    build_baoab_kernel,
-    build_psgld_kernel,
-    build_sghmc_kernel,
-    build_sghmc_SVRG_kernel,
-    build_sghmcCV_kernel,
-    build_sgld_kernel,
-    build_sgld_SVRG_kernel,
-    build_sgldCV_kernel,
-    build_sgnht_kernel,
-    build_sgnhtCV_kernel,
-)
+from .kernels import (build_badodab_kernel, build_badodabCV_kernel,
+                      build_baoab_kernel, build_psgld_kernel,
+                      build_sghmc_kernel, build_sghmc_SVRG_kernel,
+                      build_sghmcCV_kernel, build_sgld_kernel,
+                      build_sgld_SVRG_kernel, build_sgldCV_kernel,
+                      build_sgnht_kernel, build_sgnhtCV_kernel)
 from .types import DiffusionState, PRNGKey, PyTree, SamplerState, SVRGState
 from .util import progress_bar_scan
 

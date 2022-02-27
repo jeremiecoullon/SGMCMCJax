@@ -4,11 +4,9 @@ import pytest
 from jax import random
 from models import X_data, loglikelihood_array, logprior_array
 
-from sgmcmcjax.gradient_estimation import (
-    build_gradient_estimation_fn,
-    build_gradient_estimation_fn_CV,
-    build_gradient_estimation_fn_SVRG,
-)
+from sgmcmcjax.gradient_estimation import (build_gradient_estimation_fn,
+                                           build_gradient_estimation_fn_CV,
+                                           build_gradient_estimation_fn_SVRG)
 from sgmcmcjax.types import PRNGKey, PyTree, SamplerState, SVRGState
 from sgmcmcjax.util import build_grad_log_post
 
