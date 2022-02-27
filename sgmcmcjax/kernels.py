@@ -38,7 +38,7 @@ def _build_langevin_kernel(
         Tuple[ Callable[[PRNGKey, PyTree], SamplerState], Callable[[int, PRNGKey, SamplerState], SamplerState], Callable[[SamplerState], PyTree] ]: An (init_fun, kernel, get_params) triple.
     """
 
-    # Check whether the diffusion is a palindrome (ie: splitting scheme).
+    # Check whether the diffusion is a palindrome (ie: splitting scheme)
     if type(update_diffusion) == tuple:
         palindrome = True
         update_diffusion, update_diffusion2 = update_diffusion
