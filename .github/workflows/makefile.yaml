@@ -25,9 +25,11 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Install dependencies
-      run: pip install -r requirements-dev.txt
+      run: |
+        python setup.py develop --user
+        pip install -r requirements-dev.txt
 
     - name: run mypy
       run: mypy sgmcmcjax
