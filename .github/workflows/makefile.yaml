@@ -25,9 +25,16 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-    - name: code quality checks
-      run: |
-        pip install -r requirements-dev.txt
-        mypy sgmcmcjax
-        black --diff --check $(git ls-files '*.py')
-        isort .
+    
+    - name: Install dependencies
+      run: pip install -r requirements-dev.txt
+
+    - name: run mypy
+      run: mypy sgmcmcjax
+
+    - name: run black
+      run: black --diff --check $(git ls-files '*.py')
+
+    - name: run isort
+      run: isort .
+        
