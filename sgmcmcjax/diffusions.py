@@ -228,7 +228,7 @@ def baoab(
         x = x + v * dt(i) * 0.5
 
         c1 = jnp.exp(-gamma * dt(i))
-        c2 = jnp.sqrt(1 - c1 ** 2)
+        c2 = jnp.sqrt(1 - c1**2)
         v = c1 * v + tau * c2 * random.normal(k, shape=jnp.shape(v))
 
         x = x + v * dt(i) * 0.5
@@ -327,7 +327,7 @@ def badodab(
 
         c1 = jnp.exp(-alpha * dt(i))
         c2 = jnp.where(
-            alpha == 0, jnp.sqrt(dt(i)), jnp.sqrt(jnp.abs((1 - c1 ** 2) / (2 * alpha)))
+            alpha == 0, jnp.sqrt(dt(i)), jnp.sqrt(jnp.abs((1 - c1**2) / (2 * alpha)))
         )
         v = c1 * v + c2 * sigma * random.normal(k, shape=jnp.shape(v))
 
