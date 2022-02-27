@@ -1,0 +1,19 @@
+name: Makefile CI
+
+on: [push]
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Install dependencies
+      run: |
+        python setup.py develop --user
+        pip install -r requirements-dev.txt
+        make
+      
+    - name: Run check
+      run: make 
