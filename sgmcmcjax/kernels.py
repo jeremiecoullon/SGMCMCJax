@@ -382,7 +382,11 @@ def build_baoab_kernel(
     )
     init_diff, (update_diff1, update_diff1), get_p_diff = baoab(dt, gamma, tau)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        init_diff, (update_diff1, update_diff1), get_p_diff, estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -414,7 +418,11 @@ def build_badodab_kernel(
     )
     init_diff, (update_diff1, update_diff1), get_p_diff = badodab(dt, a)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        init_diff, (update_diff1, update_diff1), get_p_diff, estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -448,7 +456,11 @@ def build_badodabCV_kernel(
     )
     init_diff, (update_diff1, update_diff1), get_p_diff = badodab(dt, a)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
-        init_diff, (update_diff1, update_diff1), get_p_diff, estimate_gradient, init_gradient
+        init_diff,
+        (update_diff1, update_diff1),
+        get_p_diff,
+        estimate_gradient,
+        init_gradient,
     )
     return init_fn, baoab_kernel, get_params
 
@@ -487,14 +499,14 @@ def build_sghmc_kernel(
     )
     init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        init_diff, 
-        update_diff, 
-        get_p_diff, 
+        init_diff,
+        update_diff,
+        get_p_diff,
         resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params
 
@@ -532,14 +544,14 @@ def build_sghmcCV_kernel(
     )
     init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        init_diff, 
-        update_diff, 
-        get_p_diff, 
+        init_diff,
+        update_diff,
+        get_p_diff,
         resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params
 
@@ -577,13 +589,13 @@ def build_sghmc_SVRG_kernel(
     )
     init_diff, update_diff, get_p_diff, resample_momentum = sghmc(dt, alpha)
     init_fn, sghmc_kernel, get_params = _build_sghmc_kernel(
-        init_diff, 
-        update_diff, 
-        get_p_diff, 
+        init_diff,
+        update_diff,
+        get_p_diff,
         resample_momentum,
         estimate_gradient,
         init_gradient,
         L,
-        compiled_leapfrog=compiled_leapfrog
+        compiled_leapfrog=compiled_leapfrog,
     )
     return init_fn, sghmc_kernel, get_params

@@ -19,3 +19,9 @@ jobs:
       run: |
         make
         make test
+  
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
