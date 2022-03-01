@@ -40,5 +40,5 @@ jobs:
       run: black --diff --check $(git ls-files '*.py')
 
     - name: run isort
-      run: isort .
+      run: isort --profile black .
         

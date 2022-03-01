@@ -35,7 +35,7 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/jeremiecoullon/SGMCMCJax",
-    install_requires=["jax", "jaxlib", "tqdm"],
+    install_requires=["jax", "jaxlib", "tqdm", "optax"],
     extras_require=EXTRAS,
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
