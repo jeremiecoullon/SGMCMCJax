@@ -66,7 +66,8 @@ Table of contents
      nbs/logistic_regression
      nbs/BNN
      nbs/Flax_MNIST
-
+     nbs/PYMC_integration
+     
 .. toctree::
       :maxdepth: 1
       :caption: Samplers
