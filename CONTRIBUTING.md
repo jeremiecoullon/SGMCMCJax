@@ -9,12 +9,9 @@ There are 4 main ways of contributing to the library (in descending order of dif
 * Contributing or improving the documentation (`docs`) or examples (`sgmcmcjax/examples`)
 * Submitting issues related to bugs or desired enhancements
 
-# Opening issues
+# Opening issues and getting support
 
 Please open issues on [Github Issue Tracker](https://github.com/jeremiecoullon/SGMCMCJax/issues).
-
-
-# Getting support
 
 You can ask a question or start a discussion in the [Discussion section](https://github.com/jeremiecoullon/SGMCMCJax/discussions) on Github.
 
