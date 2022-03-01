@@ -40,7 +40,7 @@ Nsamples = 10_000
 samples = my_sampler(key, Nsamples, jnp.zeros(D))
 ```
 
-# Ask a question or open an issue
+## Ask a question or open an issue
 
 Please open issues on [Github Issue Tracker](https://github.com/jeremiecoullon/SGMCMCJax/issues), or ask a question in the [Discussion section](https://github.com/jeremiecoullon/SGMCMCJax/discussions) on Github. 
 
