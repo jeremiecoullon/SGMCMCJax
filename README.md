@@ -83,3 +83,5 @@ cd SGMCMCJax
 python -m pip install -e .
 ```
 Then run the tests with `pip install -r requirements-dev.txt; make`
+
+To run code style checks: `make lint`
