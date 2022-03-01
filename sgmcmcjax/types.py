@@ -1,5 +1,6 @@
 from collections import namedtuple
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import (Any, Callable, Dict, List, NamedTuple, Optional, Tuple,
+                    Union)
 
 import jax.numpy as jnp
 import numpy as np
