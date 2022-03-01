@@ -14,6 +14,10 @@ There are 4 main ways of contributing to the library (in descending order of dif
 Please open issues on [Github Issue Tracker](https://github.com/jeremiecoullon/SGMCMCJax/issues).
 
 
+# Getting support
+
+You can ask a question or start a discussion in the [Discussion section](https://github.com/jeremiecoullon/SGMCMCJax/discussions) on Github.
+
 # Contributing code via pull requests
 
 Please submit patches via pull requests.
