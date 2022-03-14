@@ -51,6 +51,8 @@ SGMCMCJax is written using JAX [@jax2018github] as its main requirement. Althoug
 
 The design of the codebase was inspired by JAX's [optimizers module](https://github.com/google/jax/blob/main/jax/example_libraries/optimizers.py) as well as the [Blackjax](https://github.com/blackjax-devs/blackjax) library of MCMC samplers. We give special thanks to Kevin Murphy, Remi Louf, Colin Carroll, Charles Matthews, and Sharad Vikram for code contributions and insightful discussions.
 
+The authors were supported by the Engineering and Physical Sciences Research Council grantEP/V022636/1.
+
 <!-- # Citations
 
 Citations to entries in paper.bib should be in
