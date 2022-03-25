@@ -7,7 +7,7 @@ tags:
   - SGMCMC
   - Bayesian inference
 authors:
-  - name: Jeremie Coullon^[first author]
+  - name: Jeremie Coullon
     orcid: 0000-0002-7032-3425
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Christopher Nemeth
@@ -20,11 +20,6 @@ affiliations:
    index: 2
 date: 17 January 2022
 bibliography: paper.bib
-
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-# aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-# aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
