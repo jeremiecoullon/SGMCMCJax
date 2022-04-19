@@ -90,3 +90,23 @@ python -m pip install -e .
 Then run the tests with `pip install -r requirements-dev.txt; make`
 
 To run code style checks: `make lint`
+
+## Citing SGMCMCJax
+
+Please use the following reference to cite this repository:
+
+```
+@article{Coullon2022,
+  doi = {10.21105/joss.04113},
+  url = {https://doi.org/10.21105/joss.04113},
+  year = {2022},
+  publisher = {The Open Journal},
+  volume = {7},
+  number = {72},
+  pages = {4113},
+  author = {Jeremie Coullon and Christopher Nemeth},
+  title = {SGMCMCJax: a lightweight JAX library for stochastic gradient Markov chain Monte Carlo algorithms},
+  journal = {Journal of Open Source Software}
+}
+```
+
