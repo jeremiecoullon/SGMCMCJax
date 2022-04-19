@@ -6,7 +6,7 @@ SGMCMCJax is a lightweight library of stochastic gradient Markov chain Monte Car
 
 The target audience for this library is researchers and practitioners: simply plug in your JAX model and easily obtain samples.
 
-Note that this library is still in its early stages so expect the API to change a bit.
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.04113/status.svg)](https://doi.org/10.21105/joss.04113)
 
 ## Example usage
 
@@ -42,7 +42,7 @@ samples = my_sampler(key, Nsamples, jnp.zeros(D))
 
 ## Ask a question or open an issue
 
-Please open issues on [Github Issue Tracker](https://github.com/jeremiecoullon/SGMCMCJax/issues), or ask a question in the [Discussion section](https://github.com/jeremiecoullon/SGMCMCJax/discussions) on Github. 
+Please open issues on [Github Issue Tracker](https://github.com/jeremiecoullon/SGMCMCJax/issues), or ask a question in the [Discussion section](https://github.com/jeremiecoullon/SGMCMCJax/discussions) on Github.
 
 
 ## Samplers
