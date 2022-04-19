@@ -93,7 +93,7 @@ To run code style checks: `make lint`
 
 ## Citing SGMCMCJax
 
-Please use the following reference to cite this repository:
+Please use the following bibtex reference to cite this repository:
 
 ```
 @article{Coullon2022,
