@@ -20,7 +20,7 @@ Another worked out example can be found in the `CNN example`_: the test accuracy
 My sampler is taking ages to compile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The sampler function can sometimes take too long to compile is the model is really big (example: a deep CNN). In that case you can set `compiled=False` which runs a native Python loop rather than a JAX scan.
+The sampler function can sometimes take too long to compile if the model is really big (example: a deep CNN). In that case you can set `compiled=False` which runs a native Python loop rather than a JAX scan.
 
 Example::
 
