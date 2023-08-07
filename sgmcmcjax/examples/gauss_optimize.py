@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import optax
 from jax import random
 
-from sgmcmcjax.optimizer import build_adam_optimizer, build_optax_optimizer
+from sgmcmcjax.optimizer import build_optax_optimizer
 
 
 def loglikelihood(theta, x):
@@ -26,7 +26,6 @@ batch_size = int(0.1 * N)
 dt = 1e-2
 opt = optax.adam(learning_rate=dt)
 optimizer = build_optax_optimizer(opt, loglikelihood, logprior, (X_data,), batch_size)
-# optimizer = build_adam_optimizer(dt, loglikelihood, logprior, (X_data,), batch_size)
 
 Nsamples = 10_000
 params, log_post_list = optimizer(key, Nsamples, jnp.zeros(D))
