@@ -41,7 +41,7 @@ _batch_k_0_fun_rows = jit(vmap(k_0_fun, in_axes=(None, 0, None, 0, None, None)))
 
 
 @jit
-def imq_KSD(samples: Array, grads: Array) -> float:
+def imq_KSD(samples: Array, grads: Array) -> Array:
     """Kernel Stein Discrepancy with IMQ kernel
 
     Args:

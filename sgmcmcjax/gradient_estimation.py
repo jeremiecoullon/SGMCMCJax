@@ -3,7 +3,7 @@ from typing import Any, Callable, Tuple
 
 import jax.numpy as jnp
 from jax import jit, lax, random
-from jax.tree_util import tree_flatten, tree_map, tree_multimap, tree_unflatten
+from jax.tree_util import tree_flatten, tree_map, tree_unflatten
 
 from .types import PRNGKey, PyTree, SamplerState, SVRGState
 
@@ -79,7 +79,7 @@ def build_gradient_estimation_fn_CV(
         grad_center = grad_log_post(centering_value, *minibatch_data)
         flat_param_grad, tree_param_grad = tree_flatten(param_grad)
         flat_grad_center, tree_grad_center = tree_flatten(grad_center)
-        new_flat_param_grad = tree_multimap(
+        new_flat_param_grad = tree_map(
             update_fn, flat_fb_grad_center, flat_param_grad, flat_grad_center
         )
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)
@@ -144,7 +144,7 @@ def build_gradient_estimation_fn_SVRG(
         grad_center = grad_log_post(svrg_state.centering_value, *minibatch_data)
         flat_param_grad, tree_param_grad = tree_flatten(param_grad)
         flat_grad_center, tree_grad_center = tree_flatten(grad_center)
-        new_flat_param_grad = tree_multimap(
+        new_flat_param_grad = tree_map(
             update_fn, svrg_state.fb_grad_center, flat_param_grad, flat_grad_center
         )
         param_grad = tree_unflatten(tree_param_grad, new_flat_param_grad)

@@ -12,6 +12,7 @@ from .NN_data import X_train
 
 N_data = X_train.shape[0]
 
+
 # ==========
 # Functions to initialise parameters
 # initialise params: list of tuples (W, b) for each layer
