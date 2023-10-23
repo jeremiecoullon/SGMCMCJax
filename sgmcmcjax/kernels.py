@@ -454,10 +454,10 @@ def build_badodabCV_kernel(
     estimate_gradient, init_gradient = build_gradient_estimation_fn_CV(
         grad_log_post, data, batch_size, centering_value
     )
-    init_diff, (update_diff1, update_diff1), get_p_diff = badodab(dt, a)
+    init_diff, (update_diff1, update_diff2), get_p_diff = badodab(dt, a)
     init_fn, baoab_kernel, get_params = _build_langevin_kernel(
         init_diff,
-        (update_diff1, update_diff1),
+        (update_diff1, update_diff2),
         get_p_diff,
         estimate_gradient,
         init_gradient,
