@@ -107,10 +107,10 @@ def test_all_samplers(sam_param):
     samples = my_sampler(key, Nsamples, param_IC)
     assert isinstance(samples, (type(param_IC)))
     if isinstance(samples, jnp.ndarray):
-        assert jnp.alltrue(~jnp.isnan(samples))
+        assert jnp.all(~jnp.isnan(samples))
     elif isinstance(samples, list):
         for elem in samples:
-            assert jnp.alltrue(~jnp.isnan(elem))
+            assert jnp.all(~jnp.isnan(elem))
     else:
         raise ValueError(
             "Parameter shapes should be either an array of a list of arrays"
