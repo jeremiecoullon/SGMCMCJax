@@ -26,7 +26,7 @@ EXTRAS = {
 
 setup(
     name="SGMCMCJax",
-    version="0.2.12",
+    version="0.2.13",
     author="Jeremie Coullon",
     author_email="jeremie.coullon@gmail.com",
     packages=find_packages(".", exclude=["tests"]),
